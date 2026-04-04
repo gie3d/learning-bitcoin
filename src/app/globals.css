@@ -3,49 +3,65 @@
 @tailwind utilities;
 
 :root {
-  /* Dark mode (default) */
-  --color-bg: #0e1117;
-  --color-surface: #161b22;
-  --color-border: #30363d;
-  --color-text-primary: #e6edf3;
-  --color-text-secondary: #8b949e;
-  --color-accent-amber: #d97706;
-  --color-accent-teal: #2dd4bf;
-  --color-code-bg: #0d1117;
-  --color-code-border: #21262d;
-  --color-success: #3fb950;
-  --color-warning: #d29922;
-}
+  /* Light palette — primary */
+  --color-bg: #ffffff;
+  --color-bg-soft: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f5f5f7;
+  --color-border: #e5e7eb;
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #6e6e73;
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-bg: #ffffff;
-    --color-surface: #f6f8fa;
-    --color-border: #d0d7de;
-    --color-text-primary: #1f2328;
-    --color-text-secondary: #656d76;
-    --color-accent-amber: #d97706;
-    --color-accent-teal: #0d9488;
-    --color-code-bg: #f6f8fa;
-    --color-code-border: #d0d7de;
-    --color-success: #1a7f37;
-    --color-warning: #9a6700;
-  }
+  /* Accent palette */
+  --color-orange: #f97316;
+  --color-orange-light: #fff7ed;
+  --color-orange-mid: #ffedd5;
+  --color-purple: #a855f7;
+  --color-purple-light: #faf5ff;
+  --color-purple-mid: #f3e8ff;
+  --color-blue: #3b82f6;
+  --color-blue-light: #eff6ff;
+  --color-blue-mid: #dbeafe;
+  --color-green: #22c55e;
+  --color-green-light: #f0fdf4;
+  --color-red: #ef4444;
+  --color-red-light: #fef2f2;
+
+  /* Code blocks — subtle on light bg */
+  --color-code-bg: #f8fafc;
+  --color-code-border: #e2e8f0;
+  --color-code-text: #0f172a;
 }
 
 @layer base {
   body {
     background-color: var(--color-bg);
     color: var(--color-text-primary);
-  }
-
-  * {
-    border-color: var(--color-border);
+    -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #f97316 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-bg-soft {
+    background: linear-gradient(135deg, #fff7ed 0%, #faf5ff 100%);
+  }
+
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  .shadow-card-hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.08);
   }
 }

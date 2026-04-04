@@ -25,71 +25,95 @@ export function AvalancheDemo() {
       : [];
   const changedCount = diff.filter((d) => d.status === "changed").length;
   const pct = diff.length > 0 ? Math.round((changedCount / 64) * 100) : 0;
+  const isIdentical = hashA && hashB && hashA === hashB;
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
-        {/* Column A */}
-        <div className="p-4 space-y-3">
-          <label className="block text-xs font-mono uppercase tracking-widest text-text-secondary">
-            Input A
-          </label>
-          <input
-            value={inputA}
-            onChange={(e) => setInputA(e.target.value)}
-            className="w-full bg-code-bg border border-code-border rounded
-                       font-mono text-sm text-text-primary px-3 py-2
-                       focus:outline-none focus:ring-2 focus:ring-accent-teal/50"
-            spellCheck={false}
-          />
-          <div>
-            <div className="text-xs font-mono uppercase tracking-widest text-text-secondary mb-1.5">
-              SHA-256
-            </div>
-            <HashDisplay hash={hashA} diffAgainst={hashB} />
-          </div>
-        </div>
-
-        {/* Column B */}
-        <div className="p-4 space-y-3">
-          <label className="block text-xs font-mono uppercase tracking-widest text-text-secondary">
-            Input B
-          </label>
-          <input
-            value={inputB}
-            onChange={(e) => setInputB(e.target.value)}
-            className="w-full bg-code-bg border border-code-border rounded
-                       font-mono text-sm text-text-primary px-3 py-2
-                       focus:outline-none focus:ring-2 focus:ring-accent-amber/50"
-            spellCheck={false}
-          />
-          <div>
-            <div className="text-xs font-mono uppercase tracking-widest text-text-secondary mb-1.5">
-              SHA-256
-            </div>
-            <HashDisplay hash={hashB} diffAgainst={hashA} />
-          </div>
-        </div>
+    <div className="rounded-3xl overflow-hidden shadow-card border border-border">
+      {/* Header */}
+      <div
+        className="px-5 py-3 flex items-center gap-2"
+        style={{ background: "linear-gradient(90deg, #eff6ff, #faf5ff)" }}
+      >
+        <span className="text-base">🌊</span>
+        <span className="text-sm font-semibold text-text-primary">
+          Avalanche Effect
+        </span>
+        <span className="ml-auto text-xs text-text-secondary">
+          edit either input
+        </span>
       </div>
 
-      {/* Summary bar */}
-      {changedCount > 0 && (
-        <div className="border-t border-border bg-code-bg px-4 py-3 flex items-center gap-2 text-sm">
-          <span className="text-text-secondary">Changed:</span>
-          <span className="font-mono text-accent-amber font-medium">
-            {changedCount}
-          </span>
-          <span className="text-text-secondary">of 64 hex characters</span>
-          <span className="ml-auto font-mono text-accent-amber font-medium">
-            {pct}%
-          </span>
+      <div className="bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-2">
+          {/* Column A */}
+          <div className="p-5 space-y-3 border-b md:border-b-0 md:border-r border-border">
+            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+              <span className="w-5 h-5 rounded-full bg-blue text-white text-xs flex items-center justify-center font-bold">
+                A
+              </span>
+              Input A
+            </label>
+            <input
+              value={inputA}
+              onChange={(e) => setInputA(e.target.value)}
+              className="w-full bg-bg-soft border border-border rounded-xl
+                         font-sans text-sm text-text-primary px-3.5 py-2.5
+                         focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue
+                         transition-colors"
+              spellCheck={false}
+            />
+            <div className="rounded-xl bg-code-bg border border-code-border p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">
+                Hash
+              </div>
+              <HashDisplay hash={hashA} diffAgainst={hashB} />
+            </div>
+          </div>
+
+          {/* Column B */}
+          <div className="p-5 space-y-3">
+            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+              <span className="w-5 h-5 rounded-full bg-orange text-white text-xs flex items-center justify-center font-bold">
+                B
+              </span>
+              Input B
+            </label>
+            <input
+              value={inputB}
+              onChange={(e) => setInputB(e.target.value)}
+              className="w-full bg-bg-soft border border-border rounded-xl
+                         font-sans text-sm text-text-primary px-3.5 py-2.5
+                         focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange
+                         transition-colors"
+              spellCheck={false}
+            />
+            <div className="rounded-xl bg-code-bg border border-code-border p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">
+                Hash
+              </div>
+              <HashDisplay hash={hashB} diffAgainst={hashA} />
+            </div>
+          </div>
         </div>
-      )}
-      {changedCount === 0 && hashA && hashB && hashA === hashB && (
-        <div className="border-t border-border bg-code-bg px-4 py-3 text-sm text-success font-mono">
-          Identical inputs → identical hashes (deterministic)
-        </div>
-      )}
+
+        {/* Summary */}
+        {isIdentical ? (
+          <div className="border-t border-border px-5 py-3 bg-green-light text-sm text-green font-semibold flex items-center gap-2">
+            <span>✅</span> Identical inputs → identical hashes (deterministic)
+          </div>
+        ) : changedCount > 0 ? (
+          <div className="border-t border-border px-5 py-3 bg-orange-light flex items-center gap-3 text-sm">
+            <span className="text-lg">🔥</span>
+            <span className="text-text-secondary">
+              <span className="font-bold text-orange">{changedCount}</span> of 64 characters changed
+            </span>
+            <span className="ml-auto">
+              <span className="font-bold text-orange text-base">{pct}%</span>
+              <span className="text-text-secondary text-xs ml-1">different</span>
+            </span>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -33,79 +33,93 @@ export default function SHA256IrreversibilityPage() {
     <LessonLayout>
       <LessonHeader
         title="Why is SHA-256 irreversible?"
-        subtitle="SHA-256 is the backbone of Bitcoin's security. Understanding why it's a one-way function — and why that's not just a computational inconvenience but a mathematical certainty — is fundamental to understanding how Bitcoin works."
+        subtitle="SHA-256 is the backbone of Bitcoin's security. Understanding why it's a one-way function — not just hard, but mathematically impossible to reverse — is fundamental to understanding how Bitcoin works."
         difficulty="intermediate"
         readingTime="8 min read"
         topic="Cryptography"
       />
 
       {/* Section 0: Hook */}
-      <div className="mb-10 rounded-lg border border-border bg-surface p-5">
-        <p className="text-xs font-mono uppercase tracking-widest text-text-secondary mb-3">
-          The sentence below, encoded
-        </p>
-        <p className="font-mono text-xs text-accent-teal break-all leading-relaxed">
-          b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576f2a97c2d552ea9a8
-        </p>
-        <p className="mt-3 text-sm text-text-secondary">
-          This 64-character string is the SHA-256 hash of{" "}
-          <em>&ldquo;Hello, Bitcoin.&rdquo;</em> — you can verify it below. You{" "}
-          <strong className="text-text-primary">cannot</strong> get the original
-          sentence back from this string. Not in a trillion years. Here&apos;s
-          why.
-        </p>
+      <div className="mb-12 rounded-3xl overflow-hidden shadow-card border border-border">
+        <div
+          className="px-5 py-3 text-xs font-semibold text-text-secondary"
+          style={{ background: "linear-gradient(90deg, #f5f5f7, #f5f5f7)" }}
+        >
+          The sentence &ldquo;Hello, Bitcoin.&rdquo; — encoded as SHA-256
+        </div>
+        <div className="bg-code-bg px-5 py-4">
+          <p className="font-mono text-sm text-blue break-all leading-relaxed tracking-wide">
+            b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576f2a97c2d552ea9a8
+          </p>
+        </div>
+        <div className="bg-white px-5 py-4">
+          <p className="text-sm text-text-secondary leading-relaxed">
+            That 64-character string encodes the phrase above. You{" "}
+            <strong className="text-text-primary">cannot</strong> get the
+            original sentence back from it — not in a trillion years. Here&apos;s
+            the mathematical reason why.
+          </p>
+        </div>
       </div>
 
       {/* Section 1: What is a hash? */}
       <ConceptSection title="What is a hash function?">
         <p className="text-text-secondary leading-relaxed">
-          A hash function takes any input — a single character, a novel, a
-          Bitcoin block — and produces a fixed-length output called a{" "}
-          <strong className="text-text-primary">digest</strong>. SHA-256 always
-          outputs exactly 256 bits, written as 64 hexadecimal characters.
+          A hash function takes any input — a single character, a novel, an
+          entire Bitcoin block — and produces a fixed-length fingerprint called
+          a <strong className="text-text-primary">digest</strong>. SHA-256
+          always outputs exactly 256 bits, written as 64 hexadecimal characters.
         </p>
         <p className="text-text-secondary leading-relaxed">
-          Three properties define a well-designed hash function:
+          Three properties define it:
         </p>
-        <ul className="list-none space-y-2 text-sm">
-          <li className="flex gap-2">
-            <span className="text-accent-teal font-mono shrink-0">01</span>
-            <span className="text-text-secondary">
-              <strong className="text-text-primary">Deterministic</strong> —
-              the same input always produces the same output. &ldquo;hello&rdquo; will
-              always hash to the same 64 characters.
-            </span>
-          </li>
-          <li className="flex gap-2">
-            <span className="text-accent-teal font-mono shrink-0">02</span>
-            <span className="text-text-secondary">
-              <strong className="text-text-primary">Fixed-length</strong> —
-              whether your input is one byte or one gigabyte, the output is
-              always 64 hex characters.
-            </span>
-          </li>
-          <li className="flex gap-2">
-            <span className="text-accent-teal font-mono shrink-0">03</span>
-            <span className="text-text-secondary">
-              <strong className="text-text-primary">Fast to compute</strong> —
-              computing a SHA-256 hash is cheap. Modern hardware can do billions
-              per second.
-            </span>
-          </li>
-        </ul>
+        <div className="space-y-3">
+          {[
+            {
+              n: "01",
+              label: "Deterministic",
+              color: "text-orange",
+              body: `"hello" always hashes to the same 64 characters. Always.`,
+            },
+            {
+              n: "02",
+              label: "Fixed-length",
+              color: "text-purple",
+              body: "One byte or one gigabyte — the output is always 64 hex characters.",
+            },
+            {
+              n: "03",
+              label: "Fast to compute",
+              color: "text-blue",
+              body: "Computing a SHA-256 hash is cheap. Reversing one is not possible.",
+            },
+          ].map(({ n, label, color, body }) => (
+            <div
+              key={n}
+              className="flex gap-4 rounded-2xl bg-bg-soft border border-border p-4"
+            >
+              <span className={`font-mono text-xs font-bold shrink-0 mt-0.5 ${color}`}>
+                {n}
+              </span>
+              <span className="text-sm text-text-secondary">
+                <strong className="text-text-primary">{label}</strong> — {body}
+              </span>
+            </div>
+          ))}
+        </div>
         <p className="text-text-secondary leading-relaxed">
-          Try it yourself. Notice that any input — even an empty string — always
+          Try it yourself below. Notice that any input — even nothing — always
           produces exactly 64 characters.
         </p>
         <HashSandbox />
       </ConceptSection>
 
       {/* Section 2: Why can't you reverse it? */}
-      <ConceptSection title="Why you can't reverse it">
+      <ConceptSection title="Why you can&apos;t reverse it">
         <p className="text-text-secondary leading-relaxed">
-          &ldquo;Irreversible&rdquo; here is not a practical limitation — it&apos;s not
-          that computers aren&apos;t fast enough yet. It&apos;s a property baked into
-          the mathematical structure. Three separate arguments explain why.
+          &ldquo;Irreversible&rdquo; is not a practical limitation waiting for faster
+          computers. It&apos;s baked into the mathematical structure. Three separate
+          arguments explain why.
         </p>
         <StepExplainer
           steps={[
@@ -117,21 +131,19 @@ export default function SHA256IrreversibilityPage() {
                   <p>
                     SHA-256 maps an <em>infinite</em> set of possible inputs
                     onto a <em>finite</em> set of 2<sup>256</sup> outputs. By
-                    the pigeonhole principle, infinitely many different inputs
-                    share every output hash.
+                    the pigeonhole principle, infinitely many inputs share every
+                    possible output hash.
                   </p>
                   <p>
-                    When you see a hash, you cannot know which of those infinite
-                    inputs produced it. You might find <em>a</em> preimage by
-                    brute force, but you can never recover <em>the</em> original
-                    input. The information about which input was used is simply
-                    gone.
+                    When you see a hash, you can&apos;t know which input produced it.
+                    You might find <em>a</em> preimage by brute force — but
+                    never <em>the</em> original. That information is gone.
                   </p>
                   <Callout variant="insight">
                     2<sup>256</sup> ≈ 10<sup>77</sup> — larger than the
-                    estimated number of atoms in the observable universe (~10
-                    <sup>80</sup>). Even if you could check one hash per atom
-                    per second, exhaustive search is physically impossible.
+                    estimated number of atoms in the observable universe. Even
+                    checking one hash per atom per second, exhaustive search is
+                    physically impossible.
                   </Callout>
                 </>
               ),
@@ -142,16 +154,13 @@ export default function SHA256IrreversibilityPage() {
               children: (
                 <>
                   <p>
-                    Change a single character in the input — even flip one bit —
-                    and approximately half of all output bits change, in a way
-                    that appears completely random.
+                    Change a single character — flip one bit — and roughly
+                    half of all output bits change, apparently at random.
                   </p>
                   <p>
-                    This means there is no &ldquo;getting closer&rdquo; to the right
-                    answer. If you&apos;re trying to reverse a hash, you have no
-                    signal to guide you. Unlike a numeric equation where you can
-                    iteratively approach a solution, every wrong guess looks
-                    equally wrong.
+                    There&apos;s no &ldquo;getting closer.&rdquo; Every wrong guess looks
+                    equally wrong. Unlike a numeric equation you can solve
+                    iteratively, you have zero signal to guide a search.
                   </p>
                   <AvalancheDemo />
                 </>
@@ -163,16 +172,11 @@ export default function SHA256IrreversibilityPage() {
               children: (
                 <>
                   <p>
-                    SHA-256 is built from operations that individually have no
-                    inverse when combined: bitwise XOR, AND, OR, bit rotation,
-                    and modular addition. These are run through 64 rounds, each
-                    feeding into the next.
-                  </p>
-                  <p>
-                    Unlike RSA (where encryption and decryption are inverse
-                    mathematical operations) or even a Caesar cipher (where you
-                    can just reverse the shift), SHA-256 has no mathematical
-                    operation that undoes it. The round function looks like this:
+                    SHA-256 uses bitwise XOR, AND, OR, bit rotation, and
+                    modular addition — run through 64 rounds, each feeding into
+                    the next. Unlike RSA (which has a mathematical inverse) or a
+                    Caesar cipher (just reverse the shift), there is no inverse
+                    operation for SHA-256.
                   </p>
                   <CodeBlock language="pseudocode">
                     {SHA256_ROUND_CODE}
@@ -180,9 +184,8 @@ export default function SHA256IrreversibilityPage() {
                   <p>
                     Each modular addition discards carry information. Each XOR
                     can be satisfied by two different input pairs. After 64
-                    rounds, reconstructing the input from the output is
-                    equivalent to solving a system of equations with far more
-                    unknowns than constraints.
+                    rounds, reconstructing the input is equivalent to solving a
+                    massively underdetermined system of equations.
                   </p>
                 </>
               ),
@@ -191,92 +194,80 @@ export default function SHA256IrreversibilityPage() {
         />
       </ConceptSection>
 
-      {/* Section 3: Live sandbox (already shown in section 1 — reiterate with focus) */}
+      {/* Section 3: Sandbox */}
       <ConceptSection title="Explore: any input, always 64 characters">
         <p className="text-text-secondary leading-relaxed">
-          The sandbox below lets you hash anything. Try a long paragraph, a
-          single space, or your name. The output is always exactly 64 hex
-          characters — a 256-bit window that tells you nothing about how to
-          reconstruct the input.
+          Try a long paragraph, a single space, your name. No matter the size,
+          the output is always exactly 64 hex characters — and nothing about it
+          tells you how to find the input.
         </p>
         <HashSandbox />
       </ConceptSection>
 
-      {/* Section 4: Avalanche demo (dedicated) */}
+      {/* Section 4: Avalanche demo */}
       <ConceptSection title="The avalanche effect, up close">
         <p className="text-text-secondary leading-relaxed">
           The two inputs below differ by only one character (capital{" "}
-          <code className="font-mono text-sm text-accent-teal bg-code-bg px-1 rounded">
-            W
-          </code>{" "}
+          <code className="font-mono text-sm text-blue bg-blue-light px-1.5 py-0.5 rounded-lg">W</code>{" "}
           vs lowercase{" "}
-          <code className="font-mono text-sm text-accent-teal bg-code-bg px-1 rounded">
-            w
-          </code>
-          ). Watch how the outputs diverge — roughly half the characters change
-          every time, regardless of how small the edit is.
+          <code className="font-mono text-sm text-blue bg-blue-light px-1.5 py-0.5 rounded-lg">w</code>
+          ). Watch roughly half the output characters change.
         </p>
         <AvalancheDemo />
         <Callout variant="info">
-          <span className="font-mono text-accent-teal">Teal</span> characters
-          are the same in both hashes.{" "}
-          <span className="font-mono text-accent-amber">Amber</span> characters
-          differ. Edit either input to see the effect live.
+          <span className="font-bold text-blue">Blue</span> characters are the same in both hashes.{" "}
+          <span className="font-bold text-orange">Orange</span> characters differ.
+          Edit either input to see the effect live.
         </Callout>
       </ConceptSection>
 
       {/* Section 5: Challenge */}
       <ConceptSection title="Try to reverse it">
         <p className="text-text-secondary leading-relaxed">
-          Below is the SHA-256 hash of a short phrase. Try to figure out what
-          the input was. There is no trick — the only method that works is
-          guessing.
+          Below is the SHA-256 hash of a short phrase. Figure out what the input
+          was. No tricks — the only method that works is guessing.
         </p>
         <ReverseChallenge />
         <Callout variant="warning">
-          Notice: even if your guess&apos;s hash matches 60 out of 64 characters,
-          it&apos;s still completely wrong. There is no partial credit. This is what
-          &ldquo;preimage resistance&rdquo; means in practice.
+          Even matching 63 out of 64 characters is a complete miss. That&apos;s
+          what &ldquo;preimage resistance&rdquo; means — hash functions are all-or-nothing.
         </Callout>
       </ConceptSection>
 
-      {/* Section 6: Why it matters for Bitcoin */}
+      {/* Section 6: Why it matters */}
       <ConceptSection title="Why this matters for Bitcoin">
         <p className="text-text-secondary leading-relaxed">
-          SHA-256&apos;s irreversibility is not an academic curiosity — it is the
-          foundation on which Bitcoin&apos;s security rests, in two critical ways:
+          SHA-256&apos;s irreversibility is not a footnote — it&apos;s the foundation Bitcoin
+          is built on.
         </p>
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-surface p-4">
-            <h3 className="text-sm font-semibold text-text-primary mb-2">
-              Mining
-            </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-3xl border border-border bg-orange-light p-5">
+            <div className="text-2xl mb-3">⛏️</div>
+            <h3 className="text-sm font-bold text-text-primary mb-2">Mining</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Bitcoin miners must find an input (a block header with a specific
-              nonce) whose SHA-256 hash starts with a certain number of zeros.
-              Because hashing is irreversible, there is no shortcut — miners
-              must try billions of nonces per second until they find one that
-              works. This brute-force effort is the &ldquo;work&rdquo; in Proof of Work.
+              Miners must find a block header whose hash starts with a certain
+              number of zeros. Because hashing is irreversible, there&apos;s no
+              shortcut — they try billions of variations per second. That
+              brute-force effort is the &ldquo;work&rdquo; in Proof of Work.
             </p>
           </div>
-          <div className="rounded-lg border border-border bg-surface p-4">
-            <h3 className="text-sm font-semibold text-text-primary mb-2">
+          <div className="rounded-3xl border border-border bg-purple-light p-5">
+            <div className="text-2xl mb-3">🔑</div>
+            <h3 className="text-sm font-bold text-text-primary mb-2">
               Address security
             </h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Your Bitcoin private key is hashed (via SHA-256 and RIPEMD-160)
-              to produce your public address. That address is publicly visible
-              on the blockchain. But because the hash is irreversible, knowing
-              your address tells an attacker nothing about your private key —
-              and therefore nothing about your funds.
+              Your private key is hashed to produce your public address. Even
+              though your address is visible on the blockchain, the hash ensures
+              no one can work backwards to your private key — and your funds.
             </p>
           </div>
         </div>
         <Callout variant="insight">
-          Every block in the Bitcoin blockchain contains the SHA-256 hash of
-          the previous block. This chain of hashes is what makes altering
-          history computationally infeasible — you would have to redo the
-          proof-of-work for every subsequent block.
+          Every Bitcoin block contains the SHA-256 hash of the previous block.
+          This chain of hashes makes rewriting history computationally
+          impossible — you&apos;d have to redo the proof-of-work for every block
+          that follows.
         </Callout>
       </ConceptSection>
     </LessonLayout>

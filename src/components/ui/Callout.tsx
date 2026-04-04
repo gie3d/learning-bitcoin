@@ -9,15 +9,15 @@ interface CalloutProps {
 }
 
 const variantStyles: Record<CalloutVariant, string> = {
-  info: "border-accent-teal/40 bg-accent-teal/5 text-text-primary",
-  warning: "border-warning/40 bg-warning/5 text-text-primary",
-  insight: "border-accent-amber/40 bg-accent-amber/5 text-text-primary",
+  info: "bg-blue-light border-l-4 border-blue text-text-primary",
+  warning: "bg-orange-light border-l-4 border-orange text-text-primary",
+  insight: "bg-purple-light border-l-4 border-purple text-text-primary",
 };
 
 const variantIcons: Record<CalloutVariant, string> = {
-  info: "ℹ",
-  warning: "⚠",
-  insight: "◆",
+  info: "💡",
+  warning: "⚡",
+  insight: "✨",
 };
 
 export function Callout({
@@ -28,14 +28,12 @@ export function Callout({
   return (
     <div
       className={cn(
-        "flex gap-3 rounded-lg border px-4 py-3 text-sm",
+        "flex gap-3 rounded-r-2xl px-4 py-4 text-sm",
         variantStyles[variant],
         className
       )}
     >
-      <span className="mt-0.5 shrink-0 font-mono text-xs opacity-60">
-        {variantIcons[variant]}
-      </span>
+      <span className="shrink-0 text-base leading-tight">{variantIcons[variant]}</span>
       <div className="leading-relaxed">{children}</div>
     </div>
   );

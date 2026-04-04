@@ -5,11 +5,9 @@ interface ConceptSectionProps {
 
 export function ConceptSection({ title, children }: ConceptSectionProps) {
   return (
-    <section className="mb-12">
-      <h2 className="text-xl font-semibold text-text-primary mb-4 pb-2 border-b border-border">
-        {title}
-      </h2>
-      <div className="space-y-4">{children}</div>
+    <section className="mb-14">
+      <h2 className="text-2xl font-bold text-text-primary mb-6">{title}</h2>
+      <div className="space-y-5">{children}</div>
     </section>
   );
 }

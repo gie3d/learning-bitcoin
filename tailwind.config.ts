@@ -10,16 +10,30 @@ const config: Config = {
     extend: {
       colors: {
         bg: "var(--color-bg)",
+        "bg-soft": "var(--color-bg-soft)",
         surface: "var(--color-surface)",
+        "surface-raised": "var(--color-surface-raised)",
         border: "var(--color-border)",
         "text-primary": "var(--color-text-primary)",
         "text-secondary": "var(--color-text-secondary)",
-        "accent-amber": "var(--color-accent-amber)",
-        "accent-teal": "var(--color-accent-teal)",
+        // Accents
+        orange: "var(--color-orange)",
+        "orange-light": "var(--color-orange-light)",
+        "orange-mid": "var(--color-orange-mid)",
+        purple: "var(--color-purple)",
+        "purple-light": "var(--color-purple-light)",
+        "purple-mid": "var(--color-purple-mid)",
+        blue: "var(--color-blue)",
+        "blue-light": "var(--color-blue-light)",
+        "blue-mid": "var(--color-blue-mid)",
+        green: "var(--color-green)",
+        "green-light": "var(--color-green-light)",
+        red: "var(--color-red)",
+        "red-light": "var(--color-red-light)",
+        // Code
         "code-bg": "var(--color-code-bg)",
         "code-border": "var(--color-code-border)",
-        success: "var(--color-success)",
-        warning: "var(--color-warning)",
+        "code-text": "var(--color-code-text)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
@@ -28,23 +42,15 @@ const config: Config = {
       maxWidth: {
         lesson: "72ch",
       },
+      borderRadius: {
+        "2xl": "1rem",
+        "3xl": "1.5rem",
+      },
       typography: () => ({
         DEFAULT: {
           css: {
-            "--tw-prose-body": "var(--color-text-primary)",
+            "--tw-prose-body": "var(--color-text-secondary)",
             "--tw-prose-headings": "var(--color-text-primary)",
-            "--tw-prose-lead": "var(--color-text-secondary)",
-            "--tw-prose-links": "var(--color-accent-teal)",
-            "--tw-prose-bold": "var(--color-text-primary)",
-            "--tw-prose-counters": "var(--color-text-secondary)",
-            "--tw-prose-bullets": "var(--color-text-secondary)",
-            "--tw-prose-hr": "var(--color-border)",
-            "--tw-prose-quotes": "var(--color-text-primary)",
-            "--tw-prose-quote-borders": "var(--color-accent-amber)",
-            "--tw-prose-captions": "var(--color-text-secondary)",
-            "--tw-prose-code": "var(--color-text-primary)",
-            "--tw-prose-pre-code": "var(--color-text-primary)",
-            "--tw-prose-pre-bg": "var(--color-code-bg)",
             "code::before": { content: '""' },
             "code::after": { content: '""' },
           },

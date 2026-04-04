@@ -20,10 +20,13 @@ export function ProgressBar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-border">
+    <div className="fixed top-0 left-0 right-0 z-50 h-1">
       <div
-        className="h-full bg-accent-teal transition-all duration-75"
-        style={{ width: `${progress}%` }}
+        className="h-full transition-all duration-75"
+        style={{
+          width: `${progress}%`,
+          background: "linear-gradient(90deg, #f97316, #a855f7)",
+        }}
       />
     </div>
   );

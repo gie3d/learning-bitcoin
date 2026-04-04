@@ -8,31 +8,42 @@ interface StepExplainerProps {
   steps: Step[];
 }
 
+const stepColors = [
+  { bg: "bg-orange", text: "text-white", connector: "bg-orange/20" },
+  { bg: "bg-purple", text: "text-white", connector: "bg-purple/20" },
+  { bg: "bg-blue", text: "text-white", connector: "bg-blue/20" },
+];
+
 export function StepExplainer({ steps }: StepExplainerProps) {
   return (
     <div className="space-y-0">
-      {steps.map((step, i) => (
-        <div key={step.number} className="flex gap-4">
-          {/* Connector column */}
-          <div className="flex flex-col items-center">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-accent-amber bg-surface text-xs font-mono font-bold text-accent-amber">
-              {step.number}
+      {steps.map((step, i) => {
+        const color = stepColors[i % stepColors.length];
+        return (
+          <div key={step.number} className="flex gap-5">
+            {/* Connector column */}
+            <div className="flex flex-col items-center">
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${color.bg} ${color.text} shadow-sm`}
+              >
+                {step.number}
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`w-0.5 flex-1 ${color.connector} my-2`} />
+              )}
             </div>
-            {i < steps.length - 1 && (
-              <div className="w-px flex-1 bg-border my-1" />
-            )}
-          </div>
-          {/* Content */}
-          <div className={`pb-8 ${i === steps.length - 1 ? "" : ""}`}>
-            <h3 className="text-base font-semibold text-text-primary mb-2 mt-1">
-              {step.title}
-            </h3>
-            <div className="text-sm text-text-secondary leading-relaxed space-y-3">
-              {step.children}
+            {/* Content */}
+            <div className="pb-10 flex-1">
+              <h3 className="text-base font-bold text-text-primary mb-3 mt-1.5">
+                {step.title}
+              </h3>
+              <div className="text-sm text-text-secondary leading-relaxed space-y-3">
+                {step.children}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

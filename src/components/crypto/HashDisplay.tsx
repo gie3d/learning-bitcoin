@@ -12,8 +12,8 @@ interface HashDisplayProps {
 export function HashDisplay({ hash, diffAgainst, className }: HashDisplayProps) {
   if (!hash) {
     return (
-      <div className={cn("font-mono text-sm text-text-secondary/40 break-all", className)}>
-        {"0".repeat(64)}
+      <div className={cn("font-mono text-sm text-text-secondary/30 break-all", className)}>
+        {"·".repeat(64)}
       </div>
     );
   }
@@ -27,7 +27,6 @@ export function HashDisplay({ hash, diffAgainst, className }: HashDisplayProps) 
   }
 
   if (diffs) {
-    // Render with per-character diff coloring
     const groupDiffs = [];
     for (let g = 0; g < 8; g++) {
       groupDiffs.push(diffs.slice(g * 8, g * 8 + 8));
@@ -47,8 +46,8 @@ export function HashDisplay({ hash, diffAgainst, className }: HashDisplayProps) 
                 key={ci}
                 className={
                   d.status === "same"
-                    ? "text-accent-teal"
-                    : "text-accent-amber"
+                    ? "text-blue font-medium"
+                    : "text-orange font-bold"
                 }
               >
                 {d.char}
@@ -63,12 +62,12 @@ export function HashDisplay({ hash, diffAgainst, className }: HashDisplayProps) 
   return (
     <div
       className={cn(
-        "font-mono text-sm text-text-primary break-all flex flex-wrap gap-x-2 gap-y-1",
+        "font-mono text-sm text-code-text break-all flex flex-wrap gap-x-2 gap-y-1",
         className
       )}
     >
       {groups.map((group, i) => (
-        <span key={i} className="whitespace-nowrap opacity-90">
+        <span key={i} className="whitespace-nowrap">
           {group}
         </span>
       ))}

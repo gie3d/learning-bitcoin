@@ -18,18 +18,16 @@ export function LessonHeader({
   topic,
 }: LessonHeaderProps) {
   return (
-    <div className="mb-10 pb-8 border-b border-border">
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+    <div className="mb-12">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         <Badge variant={difficulty}>{difficulty}</Badge>
         <Badge variant="default">{topic}</Badge>
-        <span className="text-xs font-mono text-text-secondary ml-auto">
-          {readingTime}
-        </span>
+        <span className="text-sm text-text-secondary ml-auto">{readingTime}</span>
       </div>
-      <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight leading-tight mb-3">
+      <h1 className="text-4xl sm:text-5xl font-extrabold text-text-primary tracking-tight leading-tight mb-5">
         {title}
       </h1>
-      <p className="text-lg text-text-secondary leading-relaxed">{subtitle}</p>
+      <p className="text-lg sm:text-xl text-text-secondary leading-relaxed">{subtitle}</p>
     </div>
   );
 }
