@@ -133,6 +133,14 @@
     "play": "เล่น",
     "pause": "หยุด",
     "reset": "เริ่มใหม่",
-    "animationStep": "ขั้นตอนที่ {step} จาก {total}"
+    "animationStep": "ขั้นตอนที่ {step} จาก {total}",
+    "andLabel": "e & f (AND)",
+    "notELabel": "~e (NOT e)",
+    "notAndGLabel": "~e & g (AND)",
+    "xorCombineLabel": "(e & f) ^ (~e & g) (XOR)",
+    "bitwiseBasics": "ตัวดำเนินการระดับบิต",
+    "andExplain": "AND (&): ผลลัพธ์เป็น 1 เฉพาะเมื่อทั้งสองบิตเป็น 1 เท่านั้น",
+    "notExplain": "NOT (~): กลับบิต (0 เป็น 1, 1 เป็น 0)",
+    "xorExplain": "XOR (^): ผลลัพธ์เป็น 1 เมื่อบิตทั้งสองต่างกัน"
   }
 }

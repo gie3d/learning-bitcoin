@@ -133,6 +133,14 @@
     "play": "Play",
     "pause": "Pause",
     "reset": "Reset",
-    "animationStep": "Step {step} of {total}"
+    "animationStep": "Step {step} of {total}",
+    "andLabel": "e & f (AND)",
+    "notELabel": "~e (NOT e)",
+    "notAndGLabel": "~e & g (AND)",
+    "xorCombineLabel": "(e & f) ^ (~e & g) (XOR)",
+    "bitwiseBasics": "Bitwise Operators",
+    "andExplain": "AND (&): 1 only if both bits are 1.",
+    "notExplain": "NOT (~): Flips the bit (0 ↔ 1).",
+    "xorExplain": "XOR (^): 1 if the bits are different."
   }
 }

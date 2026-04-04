@@ -55,6 +55,7 @@ function BitRow({
   color,
   hint,
   len = 8,
+  faint = false,
 }: {
   label: string;
   val: number;
@@ -62,6 +63,7 @@ function BitRow({
   color?: string;
   hint?: string;
   len?: number;
+  faint?: boolean;
 }) {
   const bits = toBits(val, len);
   return (
@@ -74,6 +76,7 @@ function BitRow({
             on={b === 1}
             onClick={onToggle ? () => onToggle(i) : undefined}
             color={color}
+            faint={faint}
           />
         ))}
       </div>
@@ -230,13 +233,19 @@ function ChDemo() {
   const [f, setF] = useState(0b10110101);
   const [g, setG] = useState(0b01001101);
 
-  const ch = ((e & f) ^ (~e & g)) & 0xff;
+  const eAndF = (e & f) & 0xff;
+  const notE = (~e) & 0xff;
+  const notEAndG = (notE & g) & 0xff;
+  const ch = (eAndF ^ notEAndG) & 0xff;
+
   const eBits = toBits(e);
   const chBits = toBits(ch);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <p className="text-sm text-text-secondary">{t("chDesc")}</p>
+
+      {/* Inputs */}
       <div className="space-y-2">
         <BitRow
           label={`e (${t("selector")})`}
@@ -257,9 +266,22 @@ function ChDemo() {
           onToggle={(i) => setG((v) => v ^ (1 << (7 - i)))}
           color="bg-green"
         />
-        <Divider label="Ch = (e & f) ^ (~e & g) ↓" />
+      </div>
+
+      <div className="py-2">
+        <Divider label="Breakdown ↓" />
+      </div>
+
+      {/* Intermediate Steps */}
+      <div className="space-y-2 p-4 rounded-2xl bg-bg-soft/50 border border-border/40">
+        <BitRow label={t("andLabel")} val={eAndF} color="bg-purple" />
+        <BitRow label={t("notELabel")} val={notE} color="bg-blue" faint />
+        <BitRow label={t("notAndGLabel")} val={notEAndG} color="bg-green" />
+        <Divider label={t("xorCombineLabel")} />
         <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">{t("chResult")}</span>
+          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">
+            {t("chResult")}
+          </span>
           <div className="flex gap-1">
             {chBits.map((b, i) => (
               <div key={i} className="flex flex-col items-center gap-0.5">
@@ -273,9 +295,30 @@ function ChDemo() {
           <span className="text-xs text-text-secondary/60">{t("source")}</span>
         </div>
       </div>
-      <WhyCard>
-        {t("chWhy")}
-      </WhyCard>
+
+      {/* Bitwise Guide */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="p-3 rounded-xl bg-purple-light border border-purple/10">
+          <div className="text-[10px] font-bold text-purple uppercase tracking-tight mb-1">
+            {t("bitwiseBasics")}
+          </div>
+          <div className="text-xs text-text-secondary leading-relaxed">{t("andExplain")}</div>
+        </div>
+        <div className="p-3 rounded-xl bg-blue-light border border-blue/10">
+          <div className="text-[10px] font-bold text-blue uppercase tracking-tight mb-1">
+            {t("bitwiseBasics")}
+          </div>
+          <div className="text-xs text-text-secondary leading-relaxed">{t("notExplain")}</div>
+        </div>
+        <div className="p-3 rounded-xl bg-orange-light border border-orange/10">
+          <div className="text-[10px] font-bold text-orange uppercase tracking-tight mb-1">
+            {t("bitwiseBasics")}
+          </div>
+          <div className="text-xs text-text-secondary leading-relaxed">{t("xorExplain")}</div>
+        </div>
+      </div>
+
+      <WhyCard>{t("chWhy")}</WhyCard>
     </div>
   );
 }
