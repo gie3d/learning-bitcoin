@@ -157,5 +157,9 @@
     "step5Desc": "For each bit position, take the value that appears most often in <c>a</c>, <c>b</c>, and <c>c</c>.",
     "step6Title": "6. Update State",
     "step6Desc": "Shift all values and compute new <c>a</c> and <c>e</c> for the next round."
+  },
+  "footer": {
+    "support": "Enjoying the app? A few sats via Lightning are like buying me a coffee — thank you.",
+    "address": "gie3d@blink.sv"
   }
 }

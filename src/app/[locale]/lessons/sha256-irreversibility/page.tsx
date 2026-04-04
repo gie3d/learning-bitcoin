@@ -4,7 +4,6 @@ import { LessonHeader } from "@/components/lesson/LessonHeader";
 import { ConceptSection } from "@/components/lesson/ConceptSection";
 import { StepExplainer } from "@/components/lesson/StepExplainer";
 import { Callout } from "@/components/ui/Callout";
-import { CodeBlock } from "@/components/ui/CodeBlock";
 import { HashSandbox } from "@/components/crypto/HashSandbox";
 import { AvalancheDemo } from "@/components/crypto/AvalancheDemo";
 import { ReverseChallenge } from "@/components/crypto/ReverseChallenge";

@@ -1,5 +1,6 @@
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SiteHeader } from "./SiteHeader";
+import { Footer } from "./Footer";
 
 interface LessonLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export function LessonLayout({ children }: LessonLayoutProps) {
       <main className="mx-auto max-w-lesson px-4 sm:px-6 py-12 sm:py-16">
         {children}
       </main>
+      <Footer />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Badge } from "@/components/ui/Badge";
 import { BitcoinLogo } from "@/components/ui/BitcoinLogo";
+import { Footer } from "@/components/layout/Footer";
 
 export default function HomePage() {
   const t = useTranslations("home");
@@ -67,6 +68,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+      <Footer />
     </>
   );
 }

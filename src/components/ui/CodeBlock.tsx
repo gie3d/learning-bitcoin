@@ -8,7 +8,7 @@ interface CodeBlockProps {
 
 function highlightCode(code: string) {
   // 1. Escape all HTML first to prevent XSS and rendering issues
-  let escaped = code
+  const escaped = code
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
