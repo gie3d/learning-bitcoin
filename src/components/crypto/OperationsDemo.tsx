@@ -126,7 +126,7 @@ function RotrDemo() {
         <BitRow label={t("s0Result")} val={sigma} color="bg-orange" />
       </div>
       <WhyCard>
-        <span dangerouslySetInnerHTML={{ __html: t("rotrWhy") }} />
+        {t("rotrWhy")}
       </WhyCard>
     </div>
   );
@@ -146,10 +146,7 @@ function ChDemo() {
 
   return (
     <div className="space-y-3">
-      <p
-        className="text-sm text-text-secondary"
-        dangerouslySetInnerHTML={{ __html: t("chDesc") }}
-      />
+      <p className="text-sm text-text-secondary">{t("chDesc")}</p>
       <div className="space-y-2">
         <BitRow
           label={`e (${t("selector")})`}
@@ -187,7 +184,7 @@ function ChDemo() {
         </div>
       </div>
       <WhyCard>
-        <span dangerouslySetInnerHTML={{ __html: t("chWhy") }} />
+        {t("chWhy")}
       </WhyCard>
     </div>
   );
@@ -211,10 +208,7 @@ function ModAddDemo() {
 
   return (
     <div className="space-y-3">
-      <p
-        className="text-sm text-text-secondary"
-        dangerouslySetInnerHTML={{ __html: t("addDesc") }}
-      />
+      <p className="text-sm text-text-secondary">{t("addDesc")}</p>
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">a = {a}</span>
@@ -267,16 +261,12 @@ function ModAddDemo() {
         {overflowed && (
           <div className="flex gap-2 items-start rounded-xl bg-orange-light border border-orange/30 px-3 py-2 text-xs text-text-secondary">
             <span className="shrink-0">⚠️</span>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: t("addOverflow", { result }),
-              }}
-            />
+            <span>{t("addOverflow", { result })}</span>
           </div>
         )}
       </div>
       <WhyCard>
-        <span dangerouslySetInnerHTML={{ __html: t("addWhy", { result, a, b }) }} />
+        {t("addWhy", { result, a, b })}
       </WhyCard>
     </div>
   );
@@ -301,10 +291,7 @@ function MajDemo() {
 
   return (
     <div className="space-y-3">
-      <p
-        className="text-sm text-text-secondary"
-        dangerouslySetInnerHTML={{ __html: t("majDesc") }}
-      />
+      <p className="text-sm text-text-secondary">{t("majDesc")}</p>
       <div className="space-y-2">
         <BitRow label="a" val={a} onToggle={(i) => setA((v) => v ^ (1 << (7 - i)))} color="bg-blue" />
         <BitRow label="b" val={b} onToggle={(i) => setB((v) => v ^ (1 << (7 - i)))} color="bg-purple" />
@@ -330,7 +317,7 @@ function MajDemo() {
         </div>
       </div>
       <WhyCard>
-        <span dangerouslySetInnerHTML={{ __html: t("majWhy") }} />
+        {t("majWhy")}
       </WhyCard>
     </div>
   );
