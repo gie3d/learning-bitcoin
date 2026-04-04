@@ -20,11 +20,11 @@ export function StepExplainer({ steps }: StepExplainerProps) {
       {steps.map((step, i) => {
         const color = stepColors[i % stepColors.length];
         return (
-          <div key={step.number} className="flex gap-5">
+          <div key={step.number} className="flex gap-3 sm:gap-5">
             {/* Connector column */}
             <div className="flex flex-col items-center">
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${color.bg} ${color.text} shadow-sm`}
+                className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ${color.bg} ${color.text} shadow-sm`}
               >
                 {step.number}
               </div>
@@ -33,7 +33,7 @@ export function StepExplainer({ steps }: StepExplainerProps) {
               )}
             </div>
             {/* Content */}
-            <div className="pb-10 flex-1">
+            <div className="pb-8 sm:pb-10 flex-1">
               <h3 className="text-base font-bold text-text-primary mb-3 mt-1.5">
                 {step.title}
               </h3>

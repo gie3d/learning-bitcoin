@@ -9,20 +9,8 @@ import { HashSandbox } from "@/components/crypto/HashSandbox";
 import { AvalancheDemo } from "@/components/crypto/AvalancheDemo";
 import { ReverseChallenge } from "@/components/crypto/ReverseChallenge";
 import { OperationsDemo } from "@/components/crypto/OperationsDemo";
+import { RoundSteps } from "@/components/crypto/RoundSteps";
 
-const SHA256_ROUND_CODE = `// One round of SHA-256 (simplified)
-function round(a, b, c, d, e, f, g, h, w, k) {
-  const S1  = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)
-  const ch  = (e & f) ^ (~e & g)          // bitwise choice
-  const t1  = h + S1 + ch + k + w         // modular addition
-  const S0  = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)
-  const maj = (a & b) ^ (a & c) ^ (b & c) // bitwise majority
-  const t2  = S0 + maj
-
-  return [t1 + t2, a, b, c, d + t1, e, f, g]
-}
-// 64 of these rounds, each feeding into the next.
-// No step is invertible — XOR loses bits, modular addition wraps.`;
 
 export default function SHA256IrreversibilityPage() {
   const t = useTranslations("lesson");
@@ -125,18 +113,18 @@ export default function SHA256IrreversibilityPage() {
                   <p className="text-text-secondary leading-relaxed">
                     {t.rich("step3p1", {
                       c: (chunks) => (
-                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-bg-soft text-blue border border-border/80 shadow-sm">
+                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-[#eff6ff] text-[#1d4ed8] border border-[#dbeafe]">
                           {chunks}
                         </code>
                       ),
                     })}
                   </p>
-                  <CodeBlock language="pseudocode">{SHA256_ROUND_CODE}</CodeBlock>
+                  <RoundSteps />
                   <OperationsDemo />
                   <p className="text-text-secondary leading-relaxed">
                     {t.rich("step3p2", {
                       c: (chunks) => (
-                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-bg-soft text-purple border border-border/80 shadow-sm">
+                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-[#faf5ff] text-[#7e22ce] border border-[#f3e8ff]">
                           {chunks}
                         </code>
                       ),

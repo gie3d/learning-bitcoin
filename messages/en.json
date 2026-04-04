@@ -128,7 +128,7 @@
     "addOverflow": "That's ≥ 256, so the carry bit (left of divider) is discarded and the result wraps to {result}.",
     "addWhy": "When the sum overflows, the carry bit is permanently gone. Given only the result {result}, you cannot reconstruct a or b — ({result}, 0) and (0, {result}) both hash to the same value, and so do every overflow pair like ({a}, {b}). SHA-256 chains 5 modular additions per round across 64 rounds, making the information loss total.",
     "majDesc": "Each output bit is 1 when at least 2 of the 3 inputs are 1 — a majority vote. The small number under each result bit shows how many inputs voted 1. Click bits to experiment.",
-    "majWhy": "When an output bit is 1, you only know at least 2 of 3 inputs were 1 — but not whether it was exactly 2 (three possible combos) or all 3. Each output bit loses information about the exact inputs. Across 32 bit positions with three unknown 32-bit values, the Maj output leaves far too many valid (a, b, c) combinations to recover.",
+    "majWhy": "Like Ch, if you know the result is 1, you can't be sure if the inputs were (1,1,0), (1,0,1), (0,1,1), or (1,1,1). Information is lost in the 'voting' process.",
     "visualize": "Visualize",
     "play": "Play",
     "pause": "Pause",
@@ -142,5 +142,20 @@
     "andExplain": "AND (&): 1 only if both bits are 1.",
     "notExplain": "NOT (~): Flips the bit (0 ↔ 1).",
     "xorExplain": "XOR (^): 1 if the bits are different."
+  },
+  "roundSteps": {
+    "title": "Inside one SHA-256 Round",
+    "step1Title": "1. Spread Information (S1)",
+    "step1Desc": "Rotate <c>e</c> by 6, 11, and 25 bits, then <c>XOR</c> them. This ensures every bit affects many others.",
+    "step2Title": "2. Bitwise Choice (Ch)",
+    "step2Desc": "Use bits of <c>e</c> to choose between bits of <c>f</c> and <c>g</c>.",
+    "step3Title": "3. Add Constants (t1)",
+    "step3Desc": "Sum <c>h</c>, <c>S1</c>, <c>Ch</c>, and the round's specific <c>word</c> and <c>constant</c>.",
+    "step4Title": "4. Spread Information (S0)",
+    "step4Desc": "Rotate <c>a</c> by 2, 13, and 22 bits, then <c>XOR</c> them.",
+    "step5Title": "5. Majority Rule (Maj)",
+    "step5Desc": "For each bit position, take the value that appears most often in <c>a</c>, <c>b</c>, and <c>c</c>.",
+    "step6Title": "6. Update State",
+    "step6Desc": "Shift all values and compute new <c>a</c> and <c>e</c> for the next round."
   }
 }

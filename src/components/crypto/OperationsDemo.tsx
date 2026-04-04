@@ -33,7 +33,7 @@ function Bit({
       onClick={onClick}
       disabled={!onClick}
       className={[
-        "w-7 h-7 rounded font-mono text-xs font-bold transition-all select-none border",
+        "w-6 h-6 sm:w-7 sm:h-7 rounded-md font-mono text-[10px] sm:text-xs font-bold transition-all select-none border",
         on
           ? `${color} text-white border-transparent`
           : "bg-bg-soft text-text-secondary border-border",
@@ -67,20 +67,24 @@ function BitRow({
 }) {
   const bits = toBits(val, len);
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">{label}</span>
-      <div className="flex gap-1">
-        {bits.map((b, i) => (
-          <Bit
-            key={i}
-            on={b === 1}
-            onClick={onToggle ? () => onToggle(i) : undefined}
-            color={color}
-            faint={faint}
-          />
-        ))}
+    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+      <span className="w-full sm:w-24 shrink-0 font-mono text-[10px] sm:text-xs text-text-secondary uppercase tracking-wider sm:normal-case">
+        {label}
+      </span>
+      <div className="flex items-center gap-3">
+        <div className="flex gap-1">
+          {bits.map((b, i) => (
+            <Bit
+              key={i}
+              on={b === 1}
+              onClick={onToggle ? () => onToggle(i) : undefined}
+              color={color}
+              faint={faint}
+            />
+          ))}
+        </div>
+        {hint && <span className="text-[10px] sm:text-xs text-text-secondary/60 italic sm:not-italic">{hint}</span>}
       </div>
-      {hint && <span className="text-xs text-text-secondary/60">{hint}</span>}
     </div>
   );
 }
@@ -278,21 +282,23 @@ function ChDemo() {
         <BitRow label={t("notELabel")} val={notE} color="bg-blue" faint />
         <BitRow label={t("notAndGLabel")} val={notEAndG} color="bg-green" />
         <Divider label={t("xorCombineLabel")} />
-        <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <span className="w-full sm:w-24 shrink-0 font-mono text-[10px] sm:text-xs text-text-secondary uppercase tracking-wider sm:normal-case">
             {t("chResult")}
           </span>
-          <div className="flex gap-1">
-            {chBits.map((b, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit on={b === 1} color={eBits[i] ? "bg-purple" : "bg-green"} />
-                <span className="font-mono text-[9px] text-text-secondary">
-                  {eBits[i] ? "f" : "g"}
-                </span>
-              </div>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              {chBits.map((b, i) => (
+                <div key={i} className="flex flex-col items-center gap-0.5">
+                  <Bit on={b === 1} color={eBits[i] ? "bg-purple" : "bg-green"} />
+                  <span className="font-mono text-[8px] sm:text-[9px] text-text-secondary">
+                    {eBits[i] ? "f" : "g"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <span className="text-[10px] sm:text-xs text-text-secondary/60 italic sm:not-italic">{t("source")}</span>
           </div>
-          <span className="text-xs text-text-secondary/60">{t("source")}</span>
         </div>
       </div>
 
@@ -343,52 +349,62 @@ function ModAddDemo() {
     <div className="space-y-3">
       <p className="text-sm text-text-secondary">{t("addDesc")}</p>
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">a = {a}</span>
-          <div className="flex gap-1">
-            {aBits.map((bit, i) => (
-              <Bit key={i} on={bit === 1} color="bg-blue" />
-            ))}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <span className="w-full sm:w-24 shrink-0 font-mono text-[10px] sm:text-xs text-text-secondary uppercase tracking-wider sm:normal-case">
+            a = {a}
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-1">
+              {aBits.map((bit, i) => (
+                <Bit key={i} on={bit === 1} color="bg-blue" />
+              ))}
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={255}
+              value={a}
+              onChange={(e) => setA(+e.target.value)}
+              className="w-24 sm:w-20 accent-blue"
+            />
           </div>
-          <input
-            type="range"
-            min={0}
-            max={255}
-            value={a}
-            onChange={(e) => setA(+e.target.value)}
-            className="w-20 accent-blue"
-          />
         </div>
-        <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">b = {b}</span>
-          <div className="flex gap-1">
-            {bBits.map((bit, i) => (
-              <Bit key={i} on={bit === 1} color="bg-purple" />
-            ))}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <span className="w-full sm:w-24 shrink-0 font-mono text-[10px] sm:text-xs text-text-secondary uppercase tracking-wider sm:normal-case">
+            b = {b}
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-1">
+              {bBits.map((bit, i) => (
+                <Bit key={i} on={bit === 1} color="bg-purple" />
+              ))}
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={255}
+              value={b}
+              onChange={(e) => setB(+e.target.value)}
+              className="w-24 sm:w-20 accent-purple"
+            />
           </div>
-          <input
-            type="range"
-            min={0}
-            max={255}
-            value={b}
-            onChange={(e) => setB(+e.target.value)}
-            className="w-20 accent-purple"
-          />
         </div>
         <Divider label={`(${a} + ${b}) mod 256 ↓`} />
-        <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <span className="w-full sm:w-24 shrink-0 font-mono text-[10px] sm:text-xs text-text-secondary uppercase tracking-wider sm:normal-case">
             {t("result")} = {result}
           </span>
           <div className="flex gap-1 items-center">
             <div className="flex flex-col items-center mr-1">
               <Bit on={carryBit === 1} color="bg-red" faint={!overflowed} />
-              <span className="font-mono text-[9px] text-text-secondary mt-0.5">{t("carry")}</span>
+              <span className="font-mono text-[8px] sm:text-[9px] text-text-secondary mt-0.5">{t("carry")}</span>
             </div>
-            <div className="w-px h-7 bg-border mx-1" />
-            {resultBits.map((bit, i) => (
-              <Bit key={i} on={bit === 1} color="bg-orange" />
-            ))}
+            <div className="w-px h-6 sm:h-7 bg-border mx-0.5 sm:mx-1" />
+            <div className="flex gap-1">
+              {resultBits.map((bit, i) => (
+                <Bit key={i} on={bit === 1} color="bg-orange" />
+              ))}
+            </div>
           </div>
         </div>
         {overflowed && (
@@ -436,17 +452,23 @@ function MajDemo() {
           hint={t("flipHint")}
         />
         <Divider label={t("majorityLabel")} />
-        <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 font-mono text-xs text-text-secondary">{t("majResult")}</span>
-          <div className="flex gap-1">
-            {majBits.map((bit, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit on={bit === 1} color="bg-orange" />
-                <span className="font-mono text-[9px] text-text-secondary">{votes[i]}/3</span>
-              </div>
-            ))}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <span className="w-full sm:w-24 shrink-0 font-mono text-[10px] sm:text-xs text-text-secondary uppercase tracking-wider sm:normal-case">
+            {t("majResult")}
+          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              {majBits.map((bit, i) => (
+                <div key={i} className="flex flex-col items-center gap-0.5">
+                  <Bit on={bit === 1} color="bg-orange" />
+                  <span className="font-mono text-[8px] sm:text-[9px] text-text-secondary">
+                    {votes[i]}/3
+                  </span>
+                </div>
+              ))}
+            </div>
+            <span className="text-[10px] sm:text-xs text-text-secondary/60 italic sm:not-italic">{t("votes")}</span>
           </div>
-          <span className="text-xs text-text-secondary/60">{t("votes")}</span>
         </div>
       </div>
       <WhyCard>
@@ -485,13 +507,13 @@ export function OperationsDemo() {
       </div>
 
       {/* tabs */}
-      <div className="flex border-b border-border bg-bg-soft">
+      <div className="flex border-b border-border bg-bg-soft overflow-x-auto no-scrollbar">
         {OPS.map((op) => (
           <button
             key={op}
             onClick={() => setActive(op)}
             className={[
-              "flex-1 px-3 py-2.5 text-xs font-semibold transition-colors",
+              "flex-1 min-w-[80px] px-3 py-2.5 text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap",
               active === op
                 ? "text-text-primary border-b-2 border-orange bg-white"
                 : "text-text-secondary hover:text-text-primary",

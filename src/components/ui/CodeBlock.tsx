@@ -51,23 +51,24 @@ export function CodeBlock({ children, language, className }: CodeBlockProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-code-border overflow-hidden shadow-card bg-code-bg",
+        "bg-code-bg shadow-card border-y border-code-border sm:border sm:rounded-2xl sm:overflow-hidden",
+        "-ml-14 -mr-4 sm:ml-0 sm:mr-0", // More aggressive pull on left to clear step numbers
         className
       )}
     >
       {language && (
-        <div className="flex items-center gap-2 border-b border-code-border bg-code-bg px-4 py-2.5">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red/40" />
-            <div className="w-3 h-3 rounded-full bg-orange/40" />
-            <div className="w-3 h-3 rounded-full bg-green/40" />
+        <div className="flex items-center gap-2 border-b border-code-border bg-code-bg px-4 py-2 sm:px-4 sm:py-2.5">
+          <div className="flex gap-1">
+            <div className="w-2.5 h-2.5 rounded-full bg-red/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-orange/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green/40" />
           </div>
-          <span className="font-mono text-[10px] font-bold text-text-secondary/60 uppercase tracking-widest ml-2">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold text-text-secondary/60 uppercase tracking-widest ml-2">
             {language}
           </span>
         </div>
       )}
-      <pre className="overflow-x-auto p-5 text-[13px] leading-relaxed">
+      <pre className="overflow-x-auto p-4 sm:p-5 text-[12px] sm:text-[13px] leading-relaxed">
         <code
           className="font-mono text-code-text"
           dangerouslySetInnerHTML={{ __html: highlighted }}
