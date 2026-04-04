@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
 
@@ -102,11 +102,102 @@ function WhyCard({ children }: { children: React.ReactNode }) {
   );
 }
 
+function RotrVisualizer({ val, n, color }: { val: number; n: number; color: string }) {
+  const t = useTranslations("operations");
+  const [step, setStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isPlaying && step < n) {
+      timer = setTimeout(() => {
+        setStep((s) => s + 1);
+      }, 600);
+    } else if (step >= n) {
+      setIsPlaying(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isPlaying, step, n]);
+
+  const currentVal = rotr8(val, step);
+  const bits = toBits(currentVal);
+
+  return (
+    <div className="mt-4 p-4 rounded-2xl bg-bg-soft border border-border/60 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${color}`} />
+          <h4 className="text-[10px] font-bold text-text-primary uppercase tracking-widest">
+            {t("visualize")} (rotr {step}/{n})
+          </h4>
+        </div>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => {
+              if (step >= n) setStep(0);
+              setIsPlaying(!isPlaying);
+            }}
+            className="h-7 px-3 text-[10px] font-bold rounded-lg bg-orange text-white hover:opacity-90 active:scale-95 transition-all flex items-center gap-1"
+          >
+            {isPlaying ? (
+              <>
+                <div className="flex gap-0.5">
+                  <div className="w-0.5 h-2 bg-white" />
+                  <div className="w-0.5 h-2 bg-white" />
+                </div>
+                {t("pause")}
+              </>
+            ) : (
+              <>
+                <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-white" />
+                {step >= n ? t("reset") : t("play")}
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setStep(0);
+              setIsPlaying(false);
+            }}
+            className="h-7 px-3 text-[10px] font-bold rounded-lg border border-border text-text-secondary hover:bg-white active:scale-95 transition-all"
+          >
+            {t("reset")}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex gap-1 p-2 bg-white rounded-xl shadow-sm border border-border/40 relative overflow-hidden">
+          {bits.map((b, i) => {
+            // Visualize the "wrap around" on the last bit
+            const isLatestSource = step > 0 && i === 0;
+            return (
+              <div key={i} className="flex flex-col items-center gap-1.5">
+                <div
+                  className={`transition-all duration-300 ${
+                    isLatestSource && isPlaying ? "scale-110" : ""
+                  }`}
+                >
+                  <Bit on={b === 1} color={color} />
+                </div>
+                <span className="text-[8px] font-mono text-text-secondary/40">{i}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="text-[10px] text-text-secondary/70 font-mono">
+          {t("animationStep", { step, total: n })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── ROTR ──────────────────────────────────────────────────────────────────────
 
 function RotrDemo() {
   const t = useTranslations("operations");
-  const [val, setVal] = useState(0b10110100);
+  const [val, setVal] = useState(0b01000000); // Changed default as per user request
   const toggle = (i: number) => setVal((v) => v ^ (1 << (7 - i)));
 
   const r1 = rotr8(val, 1);
@@ -125,9 +216,8 @@ function RotrDemo() {
         <Divider label={t("xorLabel")} />
         <BitRow label={t("s0Result")} val={sigma} color="bg-orange" />
       </div>
-      <WhyCard>
-        {t("rotrWhy")}
-      </WhyCard>
+      <RotrVisualizer val={val} n={5} color="bg-purple" />
+      <WhyCard>{t("rotrWhy")}</WhyCard>
     </div>
   );
 }

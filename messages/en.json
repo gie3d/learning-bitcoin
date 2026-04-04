@@ -128,6 +128,11 @@
     "addOverflow": "That's ≥ 256, so the carry bit (left of divider) is discarded and the result wraps to {result}.",
     "addWhy": "When the sum overflows, the carry bit is permanently gone. Given only the result {result}, you cannot reconstruct a or b — ({result}, 0) and (0, {result}) both hash to the same value, and so do every overflow pair like ({a}, {b}). SHA-256 chains 5 modular additions per round across 64 rounds, making the information loss total.",
     "majDesc": "Each output bit is 1 when at least 2 of the 3 inputs are 1 — a majority vote. The small number under each result bit shows how many inputs voted 1. Click bits to experiment.",
-    "majWhy": "When an output bit is 1, you only know at least 2 of 3 inputs were 1 — but not whether it was exactly 2 (three possible combos) or all 3. Each output bit loses information about the exact inputs. Across 32 bit positions with three unknown 32-bit values, the Maj output leaves far too many valid (a, b, c) combinations to recover."
+    "majWhy": "When an output bit is 1, you only know at least 2 of 3 inputs were 1 — but not whether it was exactly 2 (three possible combos) or all 3. Each output bit loses information about the exact inputs. Across 32 bit positions with three unknown 32-bit values, the Maj output leaves far too many valid (a, b, c) combinations to recover.",
+    "visualize": "Visualize",
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "animationStep": "Step {step} of {total}"
   }
 }
