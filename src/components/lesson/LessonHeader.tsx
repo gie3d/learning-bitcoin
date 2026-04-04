@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/Badge";
 
-type Difficulty = "beginner" | "intermediate" | "advanced";
+type DifficultyVariant = "beginner" | "intermediate" | "advanced";
 
 interface LessonHeaderProps {
   title: string;
   subtitle: string;
-  difficulty: Difficulty;
+  difficultyVariant: DifficultyVariant;
+  difficultyLabel: string;
   readingTime: string;
   topic: string;
 }
@@ -13,14 +14,15 @@ interface LessonHeaderProps {
 export function LessonHeader({
   title,
   subtitle,
-  difficulty,
+  difficultyVariant,
+  difficultyLabel,
   readingTime,
   topic,
 }: LessonHeaderProps) {
   return (
     <div className="mb-12">
       <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Badge variant={difficulty}>{difficulty}</Badge>
+        <Badge variant={difficultyVariant}>{difficultyLabel}</Badge>
         <Badge variant="default">{topic}</Badge>
         <span className="text-sm text-text-secondary ml-auto">{readingTime}</span>
       </div>
