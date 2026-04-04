@@ -31,7 +31,7 @@ export function LanguageSwitcher() {
                  transition-colors disabled:opacity-50"
       aria-label="Switch language"
     >
-      <span className="text-sm">{locale === "th" ? "🇹🇭" : "🇬🇧"}</span>
+      <span className="text-sm">{locale === "th" ? "🇬🇧" : "🇹🇭"}</span>
       <span>{t("switchLang")}</span>
     </button>
   );

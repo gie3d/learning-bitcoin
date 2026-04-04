@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Badge } from "@/components/ui/Badge";
+import { BitcoinLogo } from "@/components/ui/BitcoinLogo";
 
 export default function HomePage() {
   const t = useTranslations("home");
@@ -14,7 +15,7 @@ export default function HomePage() {
       <main className="mx-auto max-w-4xl px-4 sm:px-6">
         {/* Hero */}
         <div className="pt-16 pb-14 text-center">
-          <div className="text-6xl mb-6">🪙</div>
+          <BitcoinLogo className="w-16 h-16 mb-6" />
           <h1 className="text-5xl sm:text-6xl font-black text-text-primary tracking-tight mb-5 leading-tight">
             {t("titleLine1")}{" "}
             <span className="gradient-text">{t("titleAccent")}</span>

@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Learning Bitcoin",
+  title: "Bitcoin, explained.",
   description:
     "Interactive lessons on how Bitcoin works, from first principles.",
 };
