@@ -122,10 +122,26 @@ export default function SHA256IrreversibilityPage() {
               title: t("step3Title"),
               children: (
                 <>
-                  <p>{t("step3p1")}</p>
+                  <p className="text-text-secondary leading-relaxed">
+                    {t.rich("step3p1", {
+                      c: (chunks) => (
+                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-bg-soft text-blue border border-border/80 shadow-sm">
+                          {chunks}
+                        </code>
+                      ),
+                    })}
+                  </p>
                   <CodeBlock language="pseudocode">{SHA256_ROUND_CODE}</CodeBlock>
                   <OperationsDemo />
-                  <p>{t("step3p2")}</p>
+                  <p className="text-text-secondary leading-relaxed">
+                    {t.rich("step3p2", {
+                      c: (chunks) => (
+                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-bg-soft text-purple border border-border/80 shadow-sm">
+                          {chunks}
+                        </code>
+                      ),
+                    })}
+                  </p>
                 </>
               ),
             },
