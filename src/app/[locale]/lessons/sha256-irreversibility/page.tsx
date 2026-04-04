@@ -139,44 +139,37 @@ export default function SHA256IrreversibilityPage() {
         <HashSandbox />
       </ConceptSection>
 
-      {/* Section 4 */}
-      <ConceptSection title={t("s4Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s4body")}</p>
-        <AvalancheDemo />
-        <Callout variant="info">{t("s4callout")}</Callout>
-      </ConceptSection>
-
       {/* Section 5 */}
-      <ConceptSection title={t("s5Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s5body")}</p>
+      <ConceptSection title={t("s4Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s4Body")}</p>
         <ReverseChallenge />
-        <Callout variant="warning">{t("s5callout")}</Callout>
+        <Callout variant="warning">{t("s4callout")}</Callout>
       </ConceptSection>
 
       {/* Section 6 */}
-      <ConceptSection title={t("s6Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s6intro")}</p>
+      <ConceptSection title={t("s5Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s5intro")}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="rounded-3xl border border-border bg-orange-light p-5">
             <div className="text-2xl mb-3">⛏️</div>
             <h3 className="text-sm font-bold text-text-primary mb-2">
-              {t("s6miningTitle")}
+              {t("s5miningTitle")}
             </h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              {t("s6miningBody")}
+              {t("s5miningBody")}
             </p>
           </div>
           <div className="rounded-3xl border border-border bg-purple-light p-5">
             <div className="text-2xl mb-3">🔑</div>
             <h3 className="text-sm font-bold text-text-primary mb-2">
-              {t("s6addressTitle")}
+              {t("s5addressTitle")}
             </h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              {t("s6addressBody")}
+              {t("s5addressBody")}
             </p>
           </div>
         </div>
-        <Callout variant="insight">{t("s6callout")}</Callout>
+        <Callout variant="insight">{t("s5callout")}</Callout>
       </ConceptSection>
     </LessonLayout>
   );
