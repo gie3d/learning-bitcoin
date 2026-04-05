@@ -51,8 +51,8 @@ export function CodeBlock({ children, language, className }: CodeBlockProps) {
   return (
     <div
       className={cn(
-        "bg-code-bg shadow-card border-y border-code-border sm:border sm:rounded-2xl sm:overflow-hidden",
-        "-ml-14 -mr-4 sm:ml-0 sm:mr-0", // More aggressive pull on left to clear step numbers
+        "bg-code-bg shadow-card border border-code-border rounded-2xl overflow-hidden",
+        "sm:-ml-14 sm:-mr-4", // Pull left on sm+ to clear step numbers
         className
       )}
     >
