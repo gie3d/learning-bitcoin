@@ -6,10 +6,10 @@ export function RoundSteps() {
   const t = useTranslations("roundSteps");
 
   const steps = [
-    { key: "step1", formula: "S1 = rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)", color: "text-blue" },
+    { key: "step1", formula: "S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)", color: "text-blue" },
     { key: "step2", formula: "ch = (e & f) ^ (~e & g)", color: "text-purple" },
     { key: "step3", formula: "t1 = h + S1 + ch + k + w", color: "text-orange" },
-    { key: "step4", formula: "S0 = rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)", color: "text-blue" },
+    { key: "step4", formula: "S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)", color: "text-blue" },
     { key: "step5", formula: "maj = (a & b) ^ (a & c) ^ (b & c)", color: "text-green" },
     { key: "step6", formula: "[a', a, b, c, e', e, f, g]", color: "text-orange" },
   ];

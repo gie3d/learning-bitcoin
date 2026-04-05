@@ -476,6 +476,96 @@ function XorDemo8() {
   );
 }
 
+// ── AND 8-bit demo ────────────────────────────────────────────────────────────
+
+function AndDemo8() {
+  const [a, setA] = useState(0b11001010);
+  const [b, setB] = useState(0b10110011);
+
+  const result = (a & b) & 0xff;
+  const aBits = toBits8(a);
+  const bBits = toBits8(b);
+  const rBits = toBits8(result);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-text-secondary leading-relaxed">
+        AND outputs <strong>1</strong> only when <em>both</em> input bits are 1. If either input is 0, the result is 0.
+        Used in <strong>Ch</strong> and <strong>Maj</strong> to combine working variables.
+      </p>
+
+      <div className="space-y-2">
+        <BitRow8 label="a" val={a} onToggle={(i) => setA((v) => v ^ (1 << (7 - i)))} color="bg-blue" hint="← click to flip" />
+        <BitRow8 label="b" val={b} onToggle={(i) => setB((v) => v ^ (1 << (7 - i)))} color="bg-purple" />
+        <OpdivDivider label="a & b ↓" />
+        <div className="flex items-center gap-2">
+          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">result</span>
+          <div className="flex gap-1">
+            {rBits.map((bit, i) => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <Bit8
+                  on={bit === 1}
+                  color={aBits[i] === 1 && bBits[i] === 1 ? "bg-green" : "bg-bg-soft"}
+                />
+                <span className="font-mono text-[8px] text-text-secondary/50">
+                  {aBits[i] === 1 && bBits[i] === 1 ? "1" : "0"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
+        <span className="font-semibold text-text-primary">In Ch: </span>
+        <span className="font-mono">(e & f)</span> picks f{"'"}s bits wherever e is 1.{" "}
+        <span className="font-mono">(~e & g)</span> picks g{"'"}s bits wherever e is 0. Together, e acts as a selector between f and g.
+      </div>
+    </div>
+  );
+}
+
+// ── NOT 8-bit demo ────────────────────────────────────────────────────────────
+
+function NotDemo8() {
+  const [val, setVal] = useState(0b10110100);
+
+  const result = (~val) & 0xff;
+  const toggle = (i: number) => setVal((v) => v ^ (1 << (7 - i)));
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-text-secondary leading-relaxed">
+        NOT (<strong>~</strong>) flips every bit: 0 becomes 1, 1 becomes 0. It{"'"}s a bitwise complement.
+        In SHA-256, <span className="font-mono">~e</span> is used so that wherever e is 0, we read from g instead of f.
+      </p>
+
+      <div className="space-y-2">
+        <BitRow8 label="x (input)" val={val} onToggle={toggle} color="bg-blue" hint="← click to flip" />
+        <OpdivDivider label="~x ↓" />
+        <div className="flex items-center gap-2">
+          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">~x</span>
+          <div className="flex gap-1">
+            {toBits8(result).map((bit, i) => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <Bit8 on={bit === 1} color="bg-purple" />
+                <span className="font-mono text-[8px] text-text-secondary/50">
+                  {toBits8(val)[i] === 1 ? "↓0" : "↑1"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
+        <span className="font-semibold text-text-primary">In Ch: </span>
+        <span className="font-mono">Ch = (e & f) ^ (~e & g)</span> — every bit of e picks between f (if 1) and g (if 0). ~e inverts e so the second AND selects the opposite positions.
+      </div>
+    </div>
+  );
+}
+
 // ── σ0/σ1 explainer with embedded demos ──────────────────────────────────────
 
 type OpsTab = "rotr" | "shr" | "xor";
@@ -582,6 +672,98 @@ function SigmaSteps({
           <span className="font-mono text-[11px] font-bold text-orange">{t("sigmaXorResult")}</span>
           <span className="font-mono text-[11px] font-bold text-orange">{hex8(result)}</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Compression operations explainer ─────────────────────────────────────────
+
+type CompressOpsTab = "s1" | "s0" | "and" | "not";
+
+function CompressionExplainer({ t }: { t: ReturnType<typeof useTranslations> }) {
+  const [activeTab, setActiveTab] = useState<CompressOpsTab>("s1");
+
+  const tabs: { id: CompressOpsTab; label: string }[] = [
+    { id: "s1",  label: "S1" },
+    { id: "s0",  label: "S0" },
+    { id: "and", label: t("compExplainerTabAnd") },
+    { id: "not", label: t("compExplainerTabNot") },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-blue/20 bg-blue/5 p-4 space-y-4">
+      {/* Title */}
+      <div className="space-y-1">
+        <p className="text-xs font-bold text-blue">{t("compExplainerTitle")}</p>
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          {t("compExplainerSubtitle")}
+        </p>
+      </div>
+
+      {/* A–H vs a–h callout */}
+      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2.5 space-y-1.5">
+        <p className="text-[11px] font-semibold text-text-primary">{t("compExplainerVarsTitle")}</p>
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          <span className="font-mono font-bold text-text-primary">a, b, c, d, e, f, g, h</span>{" "}
+          {t("compExplainerVarsLower")}
+        </p>
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          <span className="font-mono font-bold text-text-primary">A, B, C, D, E, F, G, H</span>{" "}
+          {t("compExplainerVarsUpper")}
+        </p>
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          {t("compExplainerVarsAfter")}
+        </p>
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex gap-1 rounded-xl bg-white/60 border border-blue/15 p-0.5">
+        {tabs.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-colors",
+              activeTab === id
+                ? "bg-blue text-white shadow-sm"
+                : "text-text-secondary hover:text-blue"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="bg-white rounded-xl border border-blue/15 px-4 py-3 space-y-3">
+        {(activeTab === "s1" || activeTab === "s0") && (
+          <>
+            <div className="rounded-lg bg-code-bg border border-code-border px-3 py-2 space-y-1">
+              {activeTab === "s1" ? (
+                <>
+                  <p className="font-mono text-[11px] text-code-text">S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)</p>
+                  <p className="text-[10px] text-text-secondary italic">{t("compExplainerS1Note")}</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-mono text-[11px] text-code-text">S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)</p>
+                  <p className="text-[10px] text-text-secondary italic">{t("compExplainerS0Note")}</p>
+                </>
+              )}
+            </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              {t("compExplainerRotrDesc")}{" "}
+              {activeTab === "s1" ? t("compExplainerS1Note2") : t("compExplainerS0Note2")}
+            </p>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+              {t("compExplainerDemoLabel")}
+            </p>
+            <RotrDemo8 />
+          </>
+        )}
+        {activeTab === "and" && <AndDemo8 />}
+        {activeTab === "not" && <NotDemo8 />}
       </div>
     </div>
   );
@@ -788,16 +970,35 @@ function CompressionTab({
   ];
 
   const ops = [
-    { label: "S1",  formula: `rot(e,6) ^ rot(e,11) ^ rot(e,25)`, value: r.s1,  color: "text-blue" },
+    { label: "S1",  formula: `rotr(e,6) ^ rotr(e,11) ^ rotr(e,25)`, value: r.s1,  color: "text-blue" },
     { label: "Ch",  formula: `(e & f) ^ (~e & g)`,                value: r.ch,  color: "text-purple" },
     { label: "T1",  formula: `h + S1 + Ch + K[${round}] + W[${round}]`, value: r.t1, color: "text-orange" },
-    { label: "S0",  formula: `rot(a,2) ^ rot(a,13) ^ rot(a,22)`, value: r.s0,  color: "text-blue" },
+    { label: "S0",  formula: `rotr(a,2) ^ rotr(a,13) ^ rotr(a,22)`, value: r.s0,  color: "text-blue" },
     { label: "Maj", formula: `(a & b) ^ (a & c) ^ (b & c)`,       value: r.maj, color: "text-green" },
     { label: "T2",  formula: `S0 + Maj`,                           value: r.t2,  color: "text-orange" },
   ];
 
   return (
     <div className="space-y-5">
+      {/* Overview */}
+      <div className="rounded-2xl bg-orange/5 border border-orange/20 px-4 py-3 space-y-1.5">
+        <p className="text-xs font-bold text-text-primary">{t("compressionOverviewTitle")}</p>
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          {t("compressionOverviewDesc")}
+        </p>
+        <ul className="text-[11px] text-text-secondary space-y-0.5 pl-3 list-none">
+          <li><span className="font-mono font-bold text-blue">S1</span> — {t("compressionOverviewS1")}</li>
+          <li><span className="font-mono font-bold text-purple">Ch</span> — {t("compressionOverviewCh")}</li>
+          <li><span className="font-mono font-bold text-orange">T1</span> — {t("compressionOverviewT1")}</li>
+          <li><span className="font-mono font-bold text-blue">S0</span> — {t("compressionOverviewS0")}</li>
+          <li><span className="font-mono font-bold text-green">Maj</span> — {t("compressionOverviewMaj")}</li>
+          <li><span className="font-mono font-bold text-orange">T2</span> — {t("compressionOverviewT2")}</li>
+        </ul>
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          {t("compressionOverviewEnd")}
+        </p>
+      </div>
+
       {/* Round stepper */}
       <div className="rounded-2xl bg-code-bg border border-code-border p-4">
         <div className="flex items-center justify-between mb-3">
@@ -900,6 +1101,9 @@ function CompressionTab({
           </div>
         </div>
       </div>
+
+      {/* Operations explainer */}
+      <CompressionExplainer t={t} />
     </div>
   );
 }
