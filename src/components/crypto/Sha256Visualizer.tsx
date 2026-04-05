@@ -443,7 +443,7 @@ function XorDemo8() {
     <div className="space-y-3">
       <p className="text-[11px] text-text-secondary leading-relaxed">
         XOR outputs <strong>1</strong> when the two input bits differ, <strong>0</strong> when they match.
-        The result bit is colored by which input is "dominant" — but since both are equal contributors, you cannot recover either input from the result alone.
+        The result bit is colored by which input is &quot;dominant&quot; — but since both are equal contributors, you cannot recover either input from the result alone.
       </p>
 
       <div className="space-y-2">
