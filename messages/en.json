@@ -64,7 +64,9 @@
     "s5miningBody": "Miners must find a block header whose hash starts with a certain number of zeros. Because hashing is irreversible, there's no shortcut — they try billions of variations per second. That brute-force effort is the \"work\" in Proof of Work.",
     "s5addressTitle": "Address security",
     "s5addressBody": "Your private key is hashed to produce your public address. Even though your address is visible on the blockchain, the hash ensures no one can work backwards to your private key — and your funds.",
-    "s5callout": "Every Bitcoin block contains the SHA-256 hash of the previous block. This chain of hashes makes rewriting history computationally impossible — you'd have to redo the proof-of-work for every block that follows."
+    "s5callout": "Every Bitcoin block contains the SHA-256 hash of the previous block. This chain of hashes makes rewriting history computationally impossible — you'd have to redo the proof-of-work for every block that follows.",
+    "relatedLabel": "Related lesson",
+    "relatedNext": "How does SHA-256 work?"
   },
   "howSha256": {
     "title": "How does SHA-256 work?",
@@ -121,7 +123,9 @@
     "s5merkleBody": "All transactions in a block are hashed in pairs repeatedly until one root hash remains. This Merkle root lets anyone prove a transaction is in a block without downloading the whole block.",
     "s5addressTitle": "Address Derivation",
     "s5addressBody": "Your private key is hashed with SHA-256 (then RIPEMD-160) to produce your Bitcoin address. The hash is irreversible — your address reveals nothing about your private key.",
-    "s5callout": "SHA-256 was designed by the NSA and standardized by NIST in 2001. Its security relies entirely on the mathematical properties you just traced — not on keeping the algorithm secret."
+    "s5callout": "SHA-256 was designed by the NSA and standardized by NIST in 2001. Its security relies entirely on the mathematical properties you just traced — not on keeping the algorithm secret.",
+    "relatedLabel": "Related lesson",
+    "relatedNext": "Why is SHA-256 irreversible?"
   },
   "sandbox": {
     "title": "Hash Playground",

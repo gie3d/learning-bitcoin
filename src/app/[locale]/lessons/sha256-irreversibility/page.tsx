@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { LessonLayout } from "@/components/layout/LessonLayout";
 import { LessonHeader } from "@/components/lesson/LessonHeader";
@@ -174,6 +175,22 @@ export default function SHA256IrreversibilityPage() {
         </div>
         <Callout variant="insight">{t("s5callout")}</Callout>
       </ConceptSection>
+
+      {/* Related lesson */}
+      <div className="mt-16 pt-8 border-t border-border">
+        <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary mb-3">
+          {t("relatedLabel")}
+        </p>
+        <Link
+          href="/lessons/how-sha256-works"
+          className="group flex items-center justify-between rounded-2xl bg-bg-soft border border-border p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
+        >
+          <span className="font-semibold text-text-primary group-hover:text-orange transition-colors">
+            {t("relatedNext")}
+          </span>
+          <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
+        </Link>
+      </div>
     </LessonLayout>
   );
 }
