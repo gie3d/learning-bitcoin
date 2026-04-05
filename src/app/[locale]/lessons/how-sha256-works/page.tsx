@@ -10,6 +10,7 @@ import { HashSandbox } from "@/components/crypto/HashSandbox";
 import { RoundSteps } from "@/components/crypto/RoundSteps";
 import { OperationsDemo } from "@/components/crypto/OperationsDemo";
 import { MessagePaddingDemo } from "@/components/crypto/MessagePaddingDemo";
+import { MessageScheduleDemo } from "@/components/crypto/MessageScheduleDemo";
 
 export default function HowSHA256WorksPage() {
   const t = useTranslations("howSha256");
@@ -108,6 +109,60 @@ export default function HowSHA256WorksPage() {
                 </>
               ),
             },
+            {
+              number: 4,
+              title: t("step3bTitle"),
+              children: (
+                <>
+                  <p>{t("step3bp1")}</p>
+                  <p>{t("step3bp2")}</p>
+                  {/* Chain diagram */}
+                  <div className="rounded-2xl bg-code-bg border border-code-border p-5">
+                    <p className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-4">
+                      {t("step3bChainLabel")}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {[1, 2, 3].map((n, i, arr) => (
+                        <div key={n}>
+                          <div className="flex items-stretch gap-3">
+                            {/* Block input */}
+                            <div className="flex flex-col items-center justify-center rounded-xl border border-orange/30 bg-orange/10 px-4 py-3 min-w-[90px]">
+                              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wide">Block {n}</span>
+                              <span className="font-mono text-xs text-orange mt-0.5">512 bits</span>
+                            </div>
+                            {/* Arrow + compress box */}
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="text-text-secondary text-xs">→</span>
+                              <div className="flex flex-col items-center justify-center rounded-xl border border-purple/30 bg-purple/10 px-4 py-3 flex-1">
+                                <span className="text-[10px] font-semibold text-purple uppercase tracking-wide">Compression</span>
+                              </div>
+                              <span className="text-text-secondary text-xs">→</span>
+                            </div>
+                            {/* Output state */}
+                            <div className="flex flex-col items-center justify-center rounded-xl border border-blue/30 bg-blue/10 px-4 py-3 min-w-[90px]">
+                              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wide">
+                                {i === arr.length - 1 ? "Final hash" : "State out"}
+                              </span>
+                              <span className="font-mono text-xs text-blue mt-0.5">256 bits</span>
+                            </div>
+                          </div>
+                          {/* Downward arrow between rows */}
+                          {i < arr.length - 1 && (
+                            <div className="flex justify-end pr-[calc(90px/2+0.75rem)] mt-1 mb-1">
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-[10px] text-text-secondary font-medium">becomes initial state</span>
+                                <span className="text-text-secondary text-xs">↓</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <Callout variant="info">{t("step3bExample")}</Callout>
+                </>
+              ),
+            },
           ]}
         />
       </ConceptSection>
@@ -120,7 +175,12 @@ export default function HowSHA256WorksPage() {
             {
               number: 1,
               title: t("step4Title"),
-              children: <p>{t("step4p1")}</p>,
+              children: (
+                <>
+                  <p>{t("step4p1")}</p>
+                  <MessageScheduleDemo />
+                </>
+              ),
             },
             {
               number: 2,
@@ -205,8 +265,26 @@ export default function HowSHA256WorksPage() {
         <Callout variant="insight">{t("s5callout")}</Callout>
       </ConceptSection>
 
+      {/* Visualizer CTA */}
+      <div className="mt-12 rounded-3xl overflow-hidden shadow-card border border-border">
+        <div className="px-5 py-3 text-xs font-semibold text-text-secondary"
+          style={{ background: "linear-gradient(90deg, var(--color-orange-light), var(--color-purple-light))" }}>
+          {t("visualizerCtaLabel")}
+        </div>
+        <div className="bg-white px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <p className="text-sm text-text-secondary leading-relaxed">{t("visualizerCtaBody")}</p>
+          <Link
+            href="/tools/sha256-visualizer"
+            className="shrink-0 rounded-2xl bg-orange px-4 py-2 text-sm font-semibold text-white
+                       hover:bg-orange/90 transition-colors"
+          >
+            {t("visualizerCtaBtn")}
+          </Link>
+        </div>
+      </div>
+
       {/* Related lesson */}
-      <div className="mt-16 pt-8 border-t border-border">
+      <div className="mt-8 pt-8 border-t border-border">
         <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary mb-3">
           {t("relatedLabel")}
         </p>
