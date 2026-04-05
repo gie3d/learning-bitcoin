@@ -657,9 +657,6 @@ function ScheduleTab({
     <div className="space-y-5">
       <p className="text-sm text-text-secondary leading-relaxed">{t("scheduleDesc")}</p>
 
-      {/* σ0/σ1 explainer with interactive demos */}
-      <SigmaExplainer t={t} />
-
       {/* W[0-15] */}
       <div>
         <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
@@ -755,6 +752,9 @@ function ScheduleTab({
           </div>
         )}
       </div>
+
+      {/* σ0/σ1 explainer with interactive demos */}
+      <SigmaExplainer t={t} />
     </div>
   );
 }
