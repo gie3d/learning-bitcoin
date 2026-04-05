@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { sha256trace, type Sha256Trace } from "@/lib/crypto/sha256trace";
+import { sha256trace, type Sha256Trace, type Sha256BlockTrace } from "@/lib/crypto/sha256trace";
 import { cn } from "@/lib/utils/cn";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -48,32 +48,112 @@ function TabBar({
   );
 }
 
+// ── Block picker ──────────────────────────────────────────────────────────────
+
+function BlockPicker({
+  numBlocks,
+  selected,
+  onChange,
+  label,
+}: {
+  numBlocks: number;
+  selected: number;
+  onChange: (b: number) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide shrink-0">
+        {label}:
+      </span>
+      <div className="flex flex-wrap gap-1">
+        {Array.from({ length: numBlocks }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => onChange(i)}
+            className={cn(
+              "rounded-lg px-3 py-1 text-xs font-bold transition-colors",
+              selected === i
+                ? "bg-orange text-white"
+                : "bg-bg-soft text-text-secondary border border-border hover:text-text-primary"
+            )}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Hash bar ──────────────────────────────────────────────────────────────────
+
+function HashBar({ hash, label }: { hash: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(hash);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-border">
+      <div className="flex items-center gap-3 bg-code-bg px-4 py-3">
+        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest shrink-0">
+          {label}
+        </span>
+        <p className="font-mono text-xs text-blue break-all leading-relaxed flex-1 min-w-0">
+          {hash}
+        </p>
+        <button
+          onClick={copy}
+          className="text-[10px] font-semibold text-orange hover:text-orange/70 transition-colors shrink-0"
+        >
+          {copied ? "✓" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Padding tab ───────────────────────────────────────────────────────────────
 
 type ByteKind = "message" | "pad-start" | "zero" | "length";
 
-function byteKind(i: number, msgLen: number): ByteKind {
-  if (i < msgLen) return "message";
-  if (i === msgLen) return "pad-start";
-  if (i < 56) return "zero";
-  return "length";
-}
-
 const byteStyles: Record<ByteKind, string> = {
-  message:   "bg-green/10  text-green  border-green/30  font-semibold",
+  message:    "bg-green/10  text-green  border-green/30  font-semibold",
   "pad-start":"bg-orange/10 text-orange border-orange/30 font-semibold",
-  zero:      "bg-bg-soft text-text-secondary/40 border-border",
-  length:    "bg-blue/10  text-blue   border-blue/30  font-semibold",
+  zero:       "bg-bg-soft text-text-secondary/40 border-border",
+  length:     "bg-blue/10  text-blue   border-blue/30  font-semibold",
 };
 
-function PaddingTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTranslations> }) {
+function PaddingTab({
+  trace,
+  blockTrace,
+  t,
+}: {
+  trace: Sha256Trace;
+  blockTrace: Sha256BlockTrace;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const msgLen = trace.msgLen;
+  const totalPaddedLen = trace.allPaddedBytes.length;
+  const blockStart = blockTrace.blockIndex * 64;
+  const isLastBlock = blockTrace.blockIndex === trace.numBlocks - 1;
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-text-secondary leading-relaxed">{t("paddingDesc")}</p>
       <div className="rounded-2xl bg-code-bg border border-code-border p-4">
         <div className="grid grid-cols-8 sm:[grid-template-columns:repeat(16,minmax(2rem,1fr))] gap-1">
-          {Array.from(trace.paddedBytes).map((byte, i) => {
-            const kind = byteKind(i, trace.msgLen);
+          {Array.from(blockTrace.paddedBytes).map((byte, i) => {
+            const globalIndex = blockStart + i;
+            let kind: ByteKind;
+            if (globalIndex < msgLen) kind = "message";
+            else if (globalIndex === msgLen) kind = "pad-start";
+            else if (isLastBlock && i >= 56) kind = "length";
+            else kind = "zero";
+
             return (
               <div
                 key={i}
@@ -106,8 +186,403 @@ function PaddingTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof use
         ))}
       </div>
       <p className="text-xs font-mono text-text-secondary bg-bg-soft rounded-xl px-3 py-2">
-        {t("statsLine", { bytes: trace.msgLen, total: 64 })}
+        {t("statsLine", { bytes: msgLen, total: totalPaddedLen, blocks: trace.numBlocks })}
       </p>
+    </div>
+  );
+}
+
+// ── 8-bit ops demo primitives ─────────────────────────────────────────────────
+
+function rotr8(val: number, n: number): number {
+  n = ((n % 8) + 8) % 8;
+  return n === 0 ? val : (((val >>> n) | (val << (8 - n))) & 0xff);
+}
+function toBits8(val: number): number[] {
+  return Array.from({ length: 8 }, (_, i) => (val >> (7 - i)) & 1);
+}
+
+function Bit8({
+  on,
+  onClick,
+  color = "bg-blue",
+}: {
+  on: boolean;
+  onClick?: () => void;
+  color?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn(
+        "w-6 h-6 rounded-md font-mono text-[10px] font-bold transition-all select-none border",
+        on ? `${color} text-white border-transparent` : "bg-bg-soft text-text-secondary border-border",
+        onClick ? "cursor-pointer hover:opacity-75 active:scale-95" : "cursor-default"
+      )}
+    >
+      {on ? "1" : "0"}
+    </button>
+  );
+}
+
+function BitRow8({
+  label,
+  val,
+  onToggle,
+  color,
+  hint,
+  dropped,
+}: {
+  label: string;
+  val: number;
+  onToggle?: (i: number) => void;
+  color?: string;
+  hint?: string;
+  dropped?: boolean[];  // marks bits that were shifted off
+}) {
+  const bits = toBits8(val);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">{label}</span>
+      <div className="flex gap-1">
+        {bits.map((b, i) => (
+          <Bit8
+            key={i}
+            on={b === 1}
+            onClick={onToggle ? () => onToggle(i) : undefined}
+            color={dropped?.[i] ? "bg-text-secondary/30" : color}
+          />
+        ))}
+      </div>
+      {hint && <span className="text-[10px] text-text-secondary/60 italic">{hint}</span>}
+    </div>
+  );
+}
+
+function OpdivDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 my-1">
+      <div className="flex-1 h-px bg-border" />
+      <span className="font-mono text-[10px] text-text-secondary">{label}</span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
+
+// ── ROTR 8-bit demo ───────────────────────────────────────────────────────────
+
+function RotrDemo8() {
+  const [val, setVal] = useState(0b01100100);
+  const [n, setN] = useState(3);
+  const [animStep, setAnimStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    if (animStep >= n) { setPlaying(false); return; }
+    const timer = setTimeout(() => setAnimStep((s) => s + 1), 500);
+    return () => clearTimeout(timer);
+  }, [playing, animStep, n]);
+
+  const toggle = (i: number) => {
+    setVal((v) => v ^ (1 << (7 - i)));
+    setAnimStep(0);
+    setPlaying(false);
+  };
+
+  const currentAnimVal = rotr8(val, animStep);
+  const result = rotr8(val, n);
+  const animBits = toBits8(currentAnimVal);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-text-secondary leading-relaxed">
+        Bits are shifted right by <strong>n</strong> positions. Bits that fall off the right end wrap back to the left.
+        Click bits to flip. Use the slider to change rotation amount.
+      </p>
+
+      <div className="space-y-2">
+        <BitRow8 label="x (input)" val={val} onToggle={toggle} color="bg-blue" hint="← click to flip" />
+        <BitRow8 label={`rotr(x, ${n})`} val={result} color="bg-purple" />
+      </div>
+
+      {/* Amount slider */}
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-[10px] text-text-secondary w-28 shrink-0">rotation n =</span>
+        <input
+          type="range" min={1} max={7} value={n}
+          onChange={(e) => { setN(+e.target.value); setAnimStep(0); setPlaying(false); }}
+          className="flex-1 accent-purple"
+        />
+        <span className="font-mono text-xs font-bold text-purple w-4">{n}</span>
+      </div>
+
+      {/* Animated step visualizer */}
+      <div className="rounded-xl bg-bg-soft border border-border/60 p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+            Step-by-step — {animStep}/{n}
+          </span>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => {
+                if (animStep >= n) setAnimStep(0);
+                setPlaying((p) => !p);
+              }}
+              className="h-6 px-2.5 text-[10px] font-bold rounded-lg bg-orange text-white hover:opacity-90 active:scale-95 transition-all"
+            >
+              {playing ? "Pause" : animStep >= n ? "Reset" : "Play"}
+            </button>
+            <button
+              onClick={() => { setAnimStep(0); setPlaying(false); }}
+              className="h-6 px-2.5 text-[10px] font-bold rounded-lg border border-border text-text-secondary hover:bg-white active:scale-95 transition-all"
+            >
+              ↺
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-1 justify-center">
+          {animBits.map((b, i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <Bit8 on={b === 1} color="bg-purple" />
+              <span className="text-[8px] font-mono text-text-secondary/40">{i}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-center font-mono text-text-secondary/60">
+          {animStep === 0
+            ? "Press Play to animate one step at a time"
+            : animStep < n
+            ? `Rotated ${animStep} of ${n} — bits wrap from right to left`
+            : `Done — ${n} rotation${n > 1 ? "s" : ""} applied`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── SHR 8-bit demo ────────────────────────────────────────────────────────────
+
+function ShrDemo8() {
+  const [val, setVal] = useState(0b11001010);
+  const [n, setN] = useState(3);
+
+  const toggle = (i: number) => setVal((v) => v ^ (1 << (7 - i)));
+  const result = (val >>> n) & 0xff;
+
+  // Which bits of the *input* were shifted off (rightmost n bits)
+  const droppedInput: boolean[] = toBits8(val).map((_, i) => i >= 8 - n);
+  // Which bits of the *result* are the filled zeros (leftmost n bits)
+  const filledZero: boolean[] = toBits8(result).map((_, i) => i < n);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-text-secondary leading-relaxed">
+        Bits are shifted right by <strong>n</strong> positions. Bits that fall off the right edge are
+        <span className="font-bold text-red-500"> permanently lost</span>. Zeros fill in from the left — unlike ROTR, nothing wraps.
+      </p>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">x (input)</span>
+          <div className="flex gap-1">
+            {toBits8(val).map((b, i) => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <Bit8 on={b === 1} onClick={() => toggle(i)} color={droppedInput[i] ? "bg-text-secondary/40" : "bg-blue"} />
+                {droppedInput[i] && <span className="text-[8px] text-red-400 font-bold">✕</span>}
+              </div>
+            ))}
+          </div>
+          <span className="text-[10px] text-text-secondary/60 italic">← click to flip</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">{`shr(x, ${n})`}</span>
+          <div className="flex gap-1">
+            {toBits8(result).map((b, i) => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <Bit8 on={b === 1} color={filledZero[i] ? "bg-bg-soft" : "bg-purple"} />
+                {filledZero[i] && <span className="text-[8px] text-text-secondary/40 font-bold">0</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Amount slider */}
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-[10px] text-text-secondary w-28 shrink-0">shift n =</span>
+        <input
+          type="range" min={1} max={7} value={n}
+          onChange={(e) => setN(+e.target.value)}
+          className="flex-1 accent-purple"
+        />
+        <span className="font-mono text-xs font-bold text-purple w-4">{n}</span>
+      </div>
+
+      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
+        <span className="font-semibold text-text-primary">Why irreversible: </span>
+        The {n} rightmost bit{n > 1 ? "s" : ""} are gone. Given only the result, you cannot recover what those bit{n > 1 ? "s were" : " was"}.
+      </div>
+    </div>
+  );
+}
+
+// ── XOR 8-bit demo ────────────────────────────────────────────────────────────
+
+function XorDemo8() {
+  const [a, setA] = useState(0b11001010);
+  const [b, setB] = useState(0b01110011);
+
+  const result = (a ^ b) & 0xff;
+  const aBits = toBits8(a);
+  const bBits = toBits8(b);
+  const rBits = toBits8(result);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-text-secondary leading-relaxed">
+        XOR outputs <strong>1</strong> when the two input bits differ, <strong>0</strong> when they match.
+        The result bit is colored by which input is "dominant" — but since both are equal contributors, you cannot recover either input from the result alone.
+      </p>
+
+      <div className="space-y-2">
+        <BitRow8 label="a" val={a} onToggle={(i) => setA((v) => v ^ (1 << (7 - i)))} color="bg-blue" hint="← click to flip" />
+        <BitRow8 label="b" val={b} onToggle={(i) => setB((v) => v ^ (1 << (7 - i)))} color="bg-purple" />
+        <OpdivDivider label="a ^ b ↓" />
+        <div className="flex items-center gap-2">
+          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">result</span>
+          <div className="flex gap-1">
+            {rBits.map((bit, i) => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <Bit8
+                  on={bit === 1}
+                  color={aBits[i] !== bBits[i] ? "bg-orange" : "bg-bg-soft"}
+                />
+                <span className="font-mono text-[8px] text-text-secondary/50">
+                  {aBits[i] !== bBits[i] ? "≠" : "="}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
+        <span className="font-semibold text-text-primary">Why irreversible: </span>
+        Given result bit = 1, you know a ≠ b — but you don{"'"}t know if a=0,b=1 or a=1,b=0. Both inputs are equally valid; the XOR destroys which was which.
+      </div>
+    </div>
+  );
+}
+
+// ── σ0/σ1 explainer with embedded demos ──────────────────────────────────────
+
+type OpsTab = "rotr" | "shr" | "xor";
+
+function SigmaExplainer({ t }: { t: ReturnType<typeof useTranslations> }) {
+  const [activeOp, setActiveOp] = useState<OpsTab>("rotr");
+  const ops: OpsTab[] = ["rotr", "shr", "xor"];
+  const opLabels: Record<OpsTab, string> = { rotr: "ROTR", shr: "SHR", xor: "XOR" };
+
+  return (
+    <div className="rounded-2xl border border-purple/20 bg-purple/5 p-4 space-y-4">
+      {/* Title + description */}
+      <div className="space-y-1.5">
+        <p className="text-xs font-bold text-purple">{t("sigmaExplainerTitle")}</p>
+        <p className="text-xs text-text-secondary leading-relaxed">{t("sigmaExplainerDesc")}</p>
+      </div>
+
+      {/* Formula cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {[
+          { formula: t("sigma0Formula"), applied: t("sigma0AppliedTo") },
+          { formula: t("sigma1Formula"), applied: t("sigma1AppliedTo") },
+        ].map(({ formula, applied }) => (
+          <div key={formula} className="rounded-xl bg-code-bg border border-code-border px-3 py-2.5 space-y-1">
+            <p className="font-mono text-[11px] text-code-text">{formula}</p>
+            <p className="text-[10px] text-text-secondary italic">{applied}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Operation demos */}
+      <div className="space-y-3 pt-1 border-t border-purple/15">
+        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+          8-bit interactive demos
+        </p>
+        {/* Op tab bar */}
+        <div className="flex gap-1 rounded-xl bg-white/60 border border-purple/15 p-0.5">
+          {ops.map((op) => (
+            <button
+              key={op}
+              onClick={() => setActiveOp(op)}
+              className={cn(
+                "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-colors",
+                activeOp === op
+                  ? "bg-purple text-white shadow-sm"
+                  : "text-text-secondary hover:text-purple"
+              )}
+            >
+              {opLabels[op]}
+            </button>
+          ))}
+        </div>
+        {/* Demo content */}
+        <div className="bg-white rounded-xl border border-purple/15 px-4 py-3">
+          {activeOp === "rotr" && <RotrDemo8 />}
+          {activeOp === "shr"  && <ShrDemo8 />}
+          {activeOp === "xor"  && <XorDemo8 />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── σ0/σ1 popover steps (used inside expansion popover) ───────────────────────
+
+function SigmaSteps({
+  fn,
+  wordIndex,
+  value,
+  t,
+}: {
+  fn: "σ0" | "σ1";
+  wordIndex: number;
+  value: number;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const isSigma0 = fn === "σ0";
+  const [r1, r2, shift] = isSigma0 ? [7, 18, 3] : [17, 19, 10];
+
+  const rot1   = (((value >>> r1)    | (value << (32 - r1)))    >>> 0);
+  const rot2   = (((value >>> r2)    | (value << (32 - r2)))    >>> 0);
+  const shrVal = (value >>> shift) >>> 0;
+  const result = (rot1 ^ rot2 ^ shrVal) >>> 0;
+
+  const steps = [
+    { label: `rotr(W[${wordIndex}], ${r1})`,  value: rot1,   color: "text-purple" },
+    { label: `rotr(W[${wordIndex}], ${r2})`,  value: rot2,   color: "text-purple" },
+    { label: `shr(W[${wordIndex}], ${shift})`, value: shrVal, color: "text-blue" },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
+        {t("sigmaStepsLabel", { fn, i: wordIndex })}
+      </p>
+      <div className="space-y-1">
+        {steps.map(({ label, value: v, color }) => (
+          <div key={label} className="flex items-center justify-between rounded-lg bg-bg-soft border border-border px-3 py-1.5">
+            <span className={cn("font-mono text-[11px]", color)}>{label}</span>
+            <span className="font-mono text-[11px] font-bold text-text-primary">{hex8(v)}</span>
+          </div>
+        ))}
+        <div className="flex items-center justify-between rounded-lg bg-orange/10 border border-orange/30 px-3 py-1.5">
+          <span className="font-mono text-[11px] font-bold text-orange">{t("sigmaXorResult")}</span>
+          <span className="font-mono text-[11px] font-bold text-orange">{hex8(result)}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -147,29 +622,33 @@ function WordCard({
   );
 }
 
-function ScheduleTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTranslations> }) {
+function ScheduleTab({
+  blockTrace,
+  t,
+}: {
+  blockTrace: Sha256BlockTrace;
+  t: ReturnType<typeof useTranslations>;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
 
   const handleClick = useCallback((i: number) => {
     setSelected((prev) => (prev === i ? null : i));
   }, []);
 
-  const sel = selected !== null ? selected : null;
-  const selW = sel !== null ? trace.schedule : null;
+  const W = blockTrace.schedule;
+  const sel = selected;
 
-  // sigma helper labels for the popover
   function expansionValues(i: number) {
-    const W = trace.schedule;
     const im2  = i - 2;
     const im7  = i - 7;
     const im15 = i - 15;
     const im16 = i - 16;
     return {
-      s1_val: W[im2]  !== undefined ? hex8(W[im2])  : "?",
-      w7_val: W[im7]  !== undefined ? hex8(W[im7])  : "?",
-      s0_val: W[im15] !== undefined ? hex8(W[im15]) : "?",
+      s1_val:  W[im2]  !== undefined ? hex8(W[im2])  : "?",
+      w7_val:  W[im7]  !== undefined ? hex8(W[im7])  : "?",
+      s0_val:  W[im15] !== undefined ? hex8(W[im15]) : "?",
       w16_val: W[im16] !== undefined ? hex8(W[im16]) : "?",
-      result: hex8(W[i]),
+      result:  hex8(W[i]),
       im2, im7, im15, im16,
     };
   }
@@ -178,6 +657,9 @@ function ScheduleTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof us
     <div className="space-y-5">
       <p className="text-sm text-text-secondary leading-relaxed">{t("scheduleDesc")}</p>
 
+      {/* σ0/σ1 explainer with interactive demos */}
+      <SigmaExplainer t={t} />
+
       {/* W[0-15] */}
       <div>
         <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
@@ -185,7 +667,7 @@ function ScheduleTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof us
         </p>
         <div className="rounded-2xl bg-code-bg border border-code-border p-4">
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-            {trace.schedule.slice(0, 16).map((w, i) => {
+            {W.slice(0, 16).map((w, i) => {
               const color =
                 w !== 0 && i < 15
                   ? "bg-orange/10 text-orange border-orange/30"
@@ -206,7 +688,7 @@ function ScheduleTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof us
         </p>
         <div className="rounded-2xl bg-code-bg border border-code-border p-4">
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-            {trace.schedule.slice(16).map((w, j) => {
+            {W.slice(16).map((w, j) => {
               const i = j + 16;
               return (
                 <WordCard
@@ -227,14 +709,16 @@ function ScheduleTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof us
         </div>
 
         {/* Expansion popover */}
-        {sel !== null && selW && (
-          <div className="mt-3 rounded-2xl bg-white border border-purple/30 p-4 space-y-3">
+        {sel !== null && (
+          <div className="mt-3 rounded-2xl bg-white border border-purple/30 p-4 space-y-4">
             <p className="text-[10px] font-semibold text-purple uppercase tracking-widest">
               {t("expansionTitle", { i: sel })}
             </p>
+            {/* Formula */}
             <div className="rounded-xl bg-code-bg border border-code-border px-4 py-3 font-mono text-sm text-code-text overflow-x-auto">
               W[{sel}] = σ1(W[{sel - 2}]) + W[{sel - 7}] + σ0(W[{sel - 15}]) + W[{sel - 16}]
             </div>
+            {/* Values grid */}
             {(() => {
               const { s1_val, w7_val, s0_val, w16_val, result, im2, im7, im15, im16 } = expansionValues(sel);
               return (
@@ -253,9 +737,20 @@ function ScheduleTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof us
                 </div>
               );
             })()}
+            {/* Result */}
             <div className="flex items-center justify-between rounded-xl bg-orange/10 border border-orange/30 px-4 py-2.5">
               <span className="font-mono text-sm font-semibold text-text-primary">W[{sel}] =</span>
-              <span className="font-mono font-bold text-orange">{hex8(trace.schedule[sel])}</span>
+              <span className="font-mono font-bold text-orange">{hex8(W[sel])}</span>
+            </div>
+
+            {/* σ0/σ1 step-by-step breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-border">
+              {W[sel - 15] !== undefined && (
+                <SigmaSteps fn="σ0" wordIndex={sel - 15} value={W[sel - 15]} t={t} />
+              )}
+              {W[sel - 2] !== undefined && (
+                <SigmaSteps fn="σ1" wordIndex={sel - 2} value={W[sel - 2]} t={t} />
+              )}
             </div>
           </div>
         )}
@@ -277,9 +772,15 @@ const VAR_COLORS: Record<string, string> = {
   h: "bg-bg-soft   text-text-secondary border-border",
 };
 
-function CompressionTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTranslations> }) {
+function CompressionTab({
+  blockTrace,
+  t,
+}: {
+  blockTrace: Sha256BlockTrace;
+  t: ReturnType<typeof useTranslations>;
+}) {
   const [round, setRound] = useState(0);
-  const r = trace.rounds[round];
+  const r = blockTrace.rounds[round];
 
   const vars: [string, number][] = [
     ["a", r.a], ["b", r.b], ["c", r.c], ["d", r.d],
@@ -421,6 +922,9 @@ function HashTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTra
     "bg-green/10  text-green  border-green/30",
   ];
 
+  // Final state is the last block's finalState
+  const finalState = trace.blocks[trace.blocks.length - 1].finalState;
+
   return (
     <div className="space-y-5">
       <p className="text-sm text-text-secondary leading-relaxed">{t("hashDesc")}</p>
@@ -431,7 +935,7 @@ function HashTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTra
           {t("hashWordsLabel")}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {trace.finalState.map((w, i) => (
+          {finalState.map((w, i) => (
             <div
               key={i}
               className={cn(
@@ -483,11 +987,14 @@ export function Sha256Visualizer() {
 
   const [input, setInput] = useState("abc");
   const [tab, setTab] = useState<Tab>("padding");
+  const [selectedBlock, setSelectedBlock] = useState(0);
 
-  // Synchronous — no useEffect needed
-  const trace: Sha256Trace = sha256trace(
-    input.length > 55 ? input.slice(0, 55) : input
-  );
+  // Synchronous trace — sha256trace handles any length
+  const trace: Sha256Trace = sha256trace(input);
+
+  // Clamp selected block index when numBlocks changes
+  const blockIndex = Math.min(selectedBlock, trace.numBlocks - 1);
+  const blockTrace = trace.blocks[blockIndex];
 
   const tabLabels: Record<Tab, string> = {
     padding:     t("tabPadding"),
@@ -496,6 +1003,8 @@ export function Sha256Visualizer() {
     hash:        t("tabHash"),
   };
 
+  const msgLen = new TextEncoder().encode(input).length;
+
   return (
     <div className="space-y-5">
       {/* Input */}
@@ -503,18 +1012,17 @@ export function Sha256Visualizer() {
         <div className="px-5 py-3 flex items-center justify-between bg-bg-soft">
           <span className="text-xs font-semibold text-text-secondary">{t("inputLabel")}</span>
           <span className="text-xs text-text-secondary font-mono">
-            {input.length > 55 ? (
-              <span className="text-orange">{t("inputTruncated")}</span>
-            ) : (
-              <span>{input.length} / 55 {t("chars")}</span>
-            )}
+            {t("inputCounter", { bytes: msgLen, blocks: trace.numBlocks })}
           </span>
         </div>
         <div className="bg-white px-5 py-4 space-y-2">
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              setSelectedBlock(0);
+            }}
             placeholder={t("inputPlaceholder")}
             spellCheck={false}
             className="w-full bg-bg-soft font-sans text-sm text-text-primary
@@ -524,16 +1032,28 @@ export function Sha256Visualizer() {
           />
           <p className="text-xs text-text-secondary">{t("inputNote")}</p>
         </div>
+        {/* Hash bar — always visible */}
+        <HashBar hash={trace.hash} label={t("hashBarLabel")} />
       </div>
+
+      {/* Block picker — only shown for multi-block */}
+      {trace.numBlocks > 1 && (
+        <BlockPicker
+          numBlocks={trace.numBlocks}
+          selected={blockIndex}
+          onChange={setSelectedBlock}
+          label={t("blockPickerLabel")}
+        />
+      )}
 
       {/* Tabs */}
       <TabBar active={tab} onChange={setTab} labels={tabLabels} />
 
       {/* Tab content */}
       <div className="rounded-3xl border border-border bg-white p-5 shadow-card min-h-64">
-        {tab === "padding"     && <PaddingTab     trace={trace} t={t} />}
-        {tab === "schedule"    && <ScheduleTab    trace={trace} t={t} />}
-        {tab === "compression" && <CompressionTab trace={trace} t={t} />}
+        {tab === "padding"     && <PaddingTab     trace={trace} blockTrace={blockTrace} t={t} />}
+        {tab === "schedule"    && <ScheduleTab    blockTrace={blockTrace} t={t} />}
+        {tab === "compression" && <CompressionTab blockTrace={blockTrace} t={t} />}
         {tab === "hash"        && <HashTab        trace={trace} t={t} />}
       </div>
     </div>

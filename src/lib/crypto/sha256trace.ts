@@ -1,5 +1,5 @@
 // Pure-JS SHA-256 that exposes full intermediate state for educational tracing.
-// Single-block only: handles messages up to 55 bytes (fits in one 512-bit block).
+// Supports messages of any length (multiple 512-bit blocks).
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -57,34 +57,63 @@ export interface Sha256RoundState {
   e_new: number;
 }
 
+export interface Sha256BlockTrace {
+  blockIndex: number;
+  paddedBytes: Uint8Array;   // 64 bytes for this block
+  schedule: number[];        // W[0..63]
+  initialState: number[];    // H[0..7] at start of this block
+  rounds: Sha256RoundState[];
+  finalState: number[];      // H[0..7] after compression + add-back
+}
+
 export interface Sha256Trace {
   input: string;
   msgLen: number;
-  paddedBytes: Uint8Array;
-  schedule: number[];       // W[0..63]
-  initialState: number[];   // H[0..7] before compression
-  rounds: Sha256RoundState[];
-  finalState: number[];     // H[0..7] after compression (add initial + compressed)
+  numBlocks: number;
+  allPaddedBytes: Uint8Array;  // all blocks concatenated (numBlocks * 64 bytes)
+  blocks: Sha256BlockTrace[];
   hash: string;
+  // Legacy shims for callers that only needed single-block fields
+  /** @deprecated use blocks[0].paddedBytes */
+  paddedBytes: Uint8Array;
+  /** @deprecated use blocks[0].schedule */
+  schedule: number[];
+  /** @deprecated use blocks[0].initialState */
+  initialState: number[];
+  /** @deprecated use blocks[0].rounds */
+  rounds: Sha256RoundState[];
+  /** @deprecated use blocks[blocks.length-1].finalState */
+  finalState: number[];
 }
 
-// ── Main function ─────────────────────────────────────────────────────────────
+// ── Padding ──────────────────────────────────────────────────────────────────
 
-export function sha256trace(message: string): Sha256Trace {
-  const msgBytes = new TextEncoder().encode(message);
+function padMessage(msgBytes: Uint8Array): Uint8Array {
   const msgLen = msgBytes.length;
-
-  // ── 1. Pad to 64 bytes ──────────────────────────────────────────────────
-  const padded = new Uint8Array(64);
-  padded.set(msgBytes);
-  padded[msgLen] = 0x80;
-  // Write 64-bit big-endian bit-length in the last 8 bytes
   const bitLen = msgLen * 8;
+  // Length in bytes after appending 0x80 and the 8-byte length field must be
+  // a multiple of 64. Zero-pad to fill.
+  const zeroPad = (64 - ((msgLen + 9) % 64)) % 64;
+  const totalLen = msgLen + 1 + zeroPad + 8;
+  const padded = new Uint8Array(totalLen);
+  padded.set(msgBytes, 0);
+  padded[msgLen] = 0x80;
   const view = new DataView(padded.buffer);
-  view.setUint32(56, Math.floor(bitLen / 2 ** 32), false);
-  view.setUint32(60, bitLen >>> 0, false);
+  view.setUint32(totalLen - 8, Math.floor(bitLen / 2 ** 32), false);
+  view.setUint32(totalLen - 4, bitLen >>> 0, false);
+  return padded;
+}
 
-  // ── 2. Build message schedule ───────────────────────────────────────────
+// ── Block compression ────────────────────────────────────────────────────────
+
+function compressBlock(
+  blockBytes: Uint8Array,
+  hState: number[],
+  blockIndex: number
+): Sha256BlockTrace {
+  const view = new DataView(blockBytes.buffer, blockBytes.byteOffset, 64);
+
+  // Build message schedule
   const W: number[] = new Array(64);
   for (let i = 0; i < 16; i++) {
     W[i] = view.getUint32(i * 4, false);
@@ -95,13 +124,10 @@ export function sha256trace(message: string): Sha256Trace {
     W[i] = add32(s0, W[i - 7], s1, W[i - 16]);
   }
 
-  // ── 3. Compression ─────────────────────────────────────────────────────
-  const [h0i, h1i, h2i, h3i, h4i, h5i, h6i, h7i] = H_INIT;
-  let a = h0i, b = h1i, c = h2i, d = h3i;
-  let e = h4i, f = h5i, g = h6i, h = h7i;
+  const initialState = [...hState];
+  let [a, b, c, d, e, f, g, h] = hState;
 
   const rounds: Sha256RoundState[] = [];
-
   for (let i = 0; i < 64; i++) {
     const s1  = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
     const ch  = ((e & f) ^ (~e & g)) >>> 0;
@@ -109,7 +135,6 @@ export function sha256trace(message: string): Sha256Trace {
     const s0  = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
     const maj = (a & b) ^ (a & c) ^ (b & c);
     const t2  = add32(s0, maj);
-
     const a_new = add32(t1, t2);
     const e_new = add32(d, t1);
 
@@ -119,24 +144,58 @@ export function sha256trace(message: string): Sha256Trace {
     d = c; c = b; b = a; a = a_new;
   }
 
-  // ── 4. Final state ───────────────────────────────────────────────────────
   const finalState = [
-    add32(h0i, a), add32(h1i, b), add32(h2i, c), add32(h3i, d),
-    add32(h4i, e), add32(h5i, f), add32(h6i, g), add32(h7i, h),
+    add32(hState[0], a), add32(hState[1], b),
+    add32(hState[2], c), add32(hState[3], d),
+    add32(hState[4], e), add32(hState[5], f),
+    add32(hState[6], g), add32(hState[7], h),
   ];
 
-  const hash = finalState
-    .map((v) => v.toString(16).padStart(8, "0"))
-    .join("");
+  return {
+    blockIndex,
+    paddedBytes: blockBytes,
+    schedule: W,
+    initialState,
+    rounds,
+    finalState,
+  };
+}
+
+// ── Main function ─────────────────────────────────────────────────────────────
+
+export function sha256trace(message: string): Sha256Trace {
+  const msgBytes = new TextEncoder().encode(message);
+  const msgLen = msgBytes.length;
+  const allPaddedBytes = padMessage(msgBytes);
+  const numBlocks = allPaddedBytes.length / 64;
+
+  const blocks: Sha256BlockTrace[] = [];
+  let hState = [...H_INIT];
+
+  for (let b = 0; b < numBlocks; b++) {
+    const blockBytes = allPaddedBytes.slice(b * 64, (b + 1) * 64);
+    const blockTrace = compressBlock(blockBytes, hState, b);
+    blocks.push(blockTrace);
+    hState = blockTrace.finalState;
+  }
+
+  const hash = hState.map((v) => v.toString(16).padStart(8, "0")).join("");
+
+  const first = blocks[0];
+  const last = blocks[blocks.length - 1];
 
   return {
     input: message,
     msgLen,
-    paddedBytes: padded,
-    schedule: W,
-    initialState: [...H_INIT],
-    rounds,
-    finalState,
+    numBlocks,
+    allPaddedBytes,
+    blocks,
     hash,
+    // Legacy shims
+    paddedBytes: first.paddedBytes,
+    schedule: first.schedule,
+    initialState: first.initialState,
+    rounds: first.rounds,
+    finalState: last.finalState,
   };
 }
