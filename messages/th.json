@@ -1,12 +1,12 @@
 {
   "nav": {
-    "brand": "Bitcoin, ทำงานยังไง",
+    "brand": "Bitcoin, explained",
     "sha256Link": "SHA-256",
     "switchLang": "English"
   },
   "home": {
     "titleLine1": "Bitcoin,",
-    "titleAccent": "ทำงานยังไง",
+    "titleAccent": "explained",
     "subtitle": "บทเรียนแบบโต้ตอบที่ทำให้คุณเข้าใจการเข้ารหัสได้จริง — พิมพ์ ลองเล่น และเรียนรู้การทำงานของ Bitcoin",
     "lessonsHeading": "บทเรียน",
     "liveDemo": "ทดลองพิมพ์ได้เลย",

@@ -16,12 +16,6 @@ export function SiteHeader() {
           <span className="text-sm">{t("brand")}</span>
         </Link>
         <nav className="flex items-center gap-2 text-sm">
-          <Link
-            href="/lessons/sha256-irreversibility"
-            className="px-3 py-1.5 rounded-full text-text-secondary hover:bg-bg-soft hover:text-text-primary transition-colors font-medium"
-          >
-            {t("sha256Link")}
-          </Link>
           <LanguageSwitcher />
         </nav>
       </div>
