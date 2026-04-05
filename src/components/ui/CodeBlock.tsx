@@ -63,12 +63,12 @@ export function CodeBlock({ children, language, className }: CodeBlockProps) {
             <div className="w-2.5 h-2.5 rounded-full bg-orange/40" />
             <div className="w-2.5 h-2.5 rounded-full bg-green/40" />
           </div>
-          <span className="font-mono text-[9px] sm:text-[10px] font-bold text-text-secondary/60 uppercase tracking-widest ml-2">
+          <span className="font-mono text-[11px] sm:text-[12px] font-bold text-text-secondary/60 uppercase tracking-widest ml-2">
             {language}
           </span>
         </div>
       )}
-      <pre className="overflow-x-auto p-4 sm:p-5 text-[12px] sm:text-[13px] leading-relaxed">
+      <pre className="overflow-x-auto p-4 sm:p-5 text-[14px] sm:text-[16px] leading-relaxed">
         <code
           className="font-mono text-code-text"
           dangerouslySetInnerHTML={{ __html: highlighted }}
