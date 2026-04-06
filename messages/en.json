@@ -16,7 +16,13 @@
     "readingTime": "8 min",
     "howSha256Title": "How does SHA-256 work?",
     "howSha256Description": "Trace \"abc\" through padding, message schedule expansion, and 64 rounds of compression. See exactly what transforms any input into a 256-bit fingerprint.",
-    "howSha256ReadingTime": "10 min"
+    "howSha256ReadingTime": "10 min",
+    "toolsHeading": "Tools",
+    "vizTitle": "SHA-256 Visualizer",
+    "vizDescription": "Type any message and trace it through every step — padding, schedule expansion, and all 64 compression rounds. See exact hex values at each stage.",
+    "vizReadingTime": "Interactive",
+    "vizBadge": "Step-by-step trace",
+    "open": "Open →"
   },
   "difficulty": {
     "beginner": "Beginner",
@@ -247,7 +253,7 @@
     "address": "gie3d@blink.sv"
   },
   "sha256Visualizer": {
-    "title": "SHA-256 Step Visualizer",
+    "title": "SHA-256 Visualizer",
     "subtitle": "Type any message and trace it through every step — padding, schedule expansion, and all 64 compression rounds.",
     "readingTime": "Interactive",
     "topic": "Cryptography",

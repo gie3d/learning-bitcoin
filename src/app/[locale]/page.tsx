@@ -27,7 +27,7 @@ export default function HomePage() {
         </div>
 
         {/* Lessons */}
-        <div className="pb-20">
+        <div className="pb-12">
           <h2 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5 text-center">
             {t("lessonsHeading")}
           </h2>
@@ -99,6 +99,46 @@ export default function HomePage() {
               </div>
             </Link>
           </div>
+        </div>
+
+        {/* Tools */}
+        <div className="pb-20">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5 text-center">
+            {t("toolsHeading")}
+          </h2>
+          <Link
+            href="/tools/sha256-visualizer"
+            className="group block rounded-3xl border border-orange/30 bg-orange/5 p-6
+                       shadow-card hover:shadow-card-hover
+                       transition-all duration-200 hover:-translate-y-0.5"
+          >
+            <div className="flex items-start gap-4">
+              <div className="text-4xl shrink-0 mt-0.5">🔬</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Badge variant="intermediate">{d("intermediate")}</Badge>
+                  <Badge variant="default">{l("topic")}</Badge>
+                  <span className="text-xs font-semibold text-orange ml-auto">
+                    {t("vizReadingTime")}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-text-primary group-hover:text-orange transition-colors mb-2">
+                  {t("vizTitle")}
+                </h3>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  {t("vizDescription")}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-orange/20 flex items-center justify-between text-sm">
+              <span className="text-text-secondary text-xs">
+                {t("vizBadge")}
+              </span>
+              <span className="font-semibold text-orange group-hover:translate-x-1 transition-transform inline-block">
+                {t("open")}
+              </span>
+            </div>
+          </Link>
         </div>
       </main>
       <Footer />

@@ -16,7 +16,13 @@
     "readingTime": "8 นาที",
     "howSha256Title": "SHA-256 ทำงานยังไง?",
     "howSha256Description": "ติดตาม \"abc\" ผ่านการเติม padding การขยาย message schedule และการบีบอัด 64 รอบ ดูทุกขั้นตอนที่เปลี่ยนข้อมูลเป็น fingerprint 256 บิต",
-    "howSha256ReadingTime": "10 นาที"
+    "howSha256ReadingTime": "10 นาที",
+    "toolsHeading": "เครื่องมือ",
+    "vizTitle": "SHA-256 Visualizer",
+    "vizDescription": "พิมพ์ข้อความใดก็ได้และติดตามทุกขั้นตอน — padding, การขยาย schedule และการบีบอัด 64 รอบ ดูค่า hex ที่แน่นอนในแต่ละขั้นตอน",
+    "vizReadingTime": "โต้ตอบได้",
+    "vizBadge": "ติดตามทีละขั้นตอน",
+    "open": "เปิด →"
   },
   "difficulty": {
     "beginner": "ระดับต้น",
@@ -247,7 +253,7 @@
     "address": "gie3d@blink.sv"
   },
   "sha256Visualizer": {
-    "title": "SHA-256 Step Visualizer",
+    "title": "SHA-256 Visualizer",
     "subtitle": "พิมพ์ข้อความใดก็ได้และติดตามทุกขั้นตอน — การเติม padding การขยาย schedule และการบีบอัด 64 รอบ",
     "readingTime": "โต้ตอบได้",
     "topic": "การเข้ารหัส",
