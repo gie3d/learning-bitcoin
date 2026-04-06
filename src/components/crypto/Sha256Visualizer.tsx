@@ -243,8 +243,8 @@ function BitRow8({
 }) {
   const bits = toBits8(val);
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">{label}</span>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+      <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">{label}</span>
       <div className="flex gap-1">
         {bits.map((b, i) => (
           <Bit8
@@ -255,7 +255,7 @@ function BitRow8({
           />
         ))}
       </div>
-      {hint && <span className="text-[10px] text-text-secondary/60 italic">{hint}</span>}
+      {hint && <span className="hidden sm:inline text-[10px] text-text-secondary/60 italic">{hint}</span>}
     </div>
   );
 }
@@ -309,7 +309,7 @@ function RotrDemo8() {
 
       {/* Amount slider */}
       <div className="flex items-center gap-3">
-        <span className="font-mono text-[10px] text-text-secondary w-28 shrink-0">rotation n =</span>
+        <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">rotation n =</span>
         <input
           type="range" min={1} max={7} value={n}
           onChange={(e) => { setN(+e.target.value); setAnimStep(0); setPlaying(false); }}
@@ -384,8 +384,8 @@ function ShrDemo8() {
       </p>
 
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">x (input)</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+          <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">x (input)</span>
           <div className="flex gap-1">
             {toBits8(val).map((b, i) => (
               <div key={i} className="flex flex-col items-center gap-0.5">
@@ -394,10 +394,10 @@ function ShrDemo8() {
               </div>
             ))}
           </div>
-          <span className="text-[10px] text-text-secondary/60 italic">← click to flip</span>
+          <span className="hidden sm:inline text-[10px] text-text-secondary/60 italic">← click to flip</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">{`shr(x, ${n})`}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+          <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">{`shr(x, ${n})`}</span>
           <div className="flex gap-1">
             {toBits8(result).map((b, i) => (
               <div key={i} className="flex flex-col items-center gap-0.5">
@@ -411,7 +411,7 @@ function ShrDemo8() {
 
       {/* Amount slider */}
       <div className="flex items-center gap-3">
-        <span className="font-mono text-[10px] text-text-secondary w-28 shrink-0">shift n =</span>
+        <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">shift n =</span>
         <input
           type="range" min={1} max={7} value={n}
           onChange={(e) => setN(+e.target.value)}
@@ -941,6 +941,156 @@ function ScheduleTab({
   );
 }
 
+// ── State flow demo (A–H ↔ a–h) ──────────────────────────────────────────────
+
+const UPPER_NAMES = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
+const LOWER_NAMES = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
+
+// Colors for each slot (shared between uppercase and lowercase grids)
+const SLOT_COLORS = [
+  "bg-orange/10 text-orange border-orange/30",
+  "bg-purple/10 text-purple border-purple/30",
+  "bg-blue/10   text-blue   border-blue/30",
+  "bg-bg-soft   text-text-secondary border-border",
+  "bg-orange/10 text-orange border-orange/30",
+  "bg-purple/10 text-purple border-purple/30",
+  "bg-blue/10   text-blue   border-blue/30",
+  "bg-bg-soft   text-text-secondary border-border",
+];
+
+function StateFlowDemo({
+  blockTrace,
+  round,
+  t,
+}: {
+  blockTrace: Sha256BlockTrace;
+  round: number;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const initials = blockTrace.initialState; // A,B,C,D,E,F,G,H
+  const r = blockTrace.rounds[round];
+  const currentLow = [r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h];
+
+  // Final working vars after round 63 (what gets added back)
+  const last = blockTrace.rounds[63];
+  const finalLow = [last.a_new, last.a, last.b, last.c, last.e_new, last.e, last.f, last.g];
+
+  const isRound0 = round === 0;
+  const isRound63 = round === 63;
+
+  return (
+    <div className="rounded-2xl border border-green/20 bg-green/5 p-4 space-y-4">
+      <p className="text-xs font-bold text-green">{t("stateFlowTitle")}</p>
+
+      {/* Initial H (uppercase) */}
+      <div className="space-y-2">
+        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
+          {t("stateFlowInitLabel")}
+        </p>
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+          {initials.map((val, i) => (
+            <div
+              key={i}
+              className={cn(
+                "h-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1",
+                SLOT_COLORS[i]
+              )}
+            >
+              <span className="text-[10px] font-bold uppercase">{UPPER_NAMES[i]}</span>
+              <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
+                {hex8(val)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Arrow + note */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-px bg-green/20" />
+        <span className="text-[10px] text-green font-semibold">
+          {isRound0 ? "↓ copied → a,b,c,d,e,f,g,h" : `↓ round 0 copy, now at round ${round}`}
+        </span>
+        <div className="flex-1 h-px bg-green/20" />
+      </div>
+
+      {/* Current working vars (lowercase) */}
+      <div className="space-y-2">
+        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
+          {t("stateFlowWorkingLabel", { round })}
+        </p>
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+          {currentLow.map((val, i) => {
+            const matches = val === initials[i];
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "h-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1 transition-colors",
+                  isRound0
+                    ? "bg-green/10 text-green border-green/40"
+                    : SLOT_COLORS[i],
+                  !isRound0 && matches && "ring-1 ring-green/40"
+                )}
+              >
+                <span className="text-[10px] font-bold">{LOWER_NAMES[i]}</span>
+                <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
+                  {hex8(val)}
+                </span>
+                {isRound0 && (
+                  <span className="text-[8px] text-green font-bold">= {UPPER_NAMES[i]}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {isRound0 && (
+          <p className="text-[11px] text-green font-semibold text-center">{t("stateFlowMatchNote")}</p>
+        )}
+      </div>
+
+      {/* Add-back (shown at round 63) */}
+      {isRound63 && (
+        <>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-green/20" />
+            <span className="text-[10px] text-green font-semibold">↓ 64 rounds complete</span>
+            <div className="flex-1 h-px bg-green/20" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
+              {t("stateFlowAddBackLabel")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {blockTrace.finalState.map((val, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl bg-white border border-green/30 px-3 py-2 space-y-1"
+                >
+                  <div className="flex items-center gap-1 font-mono text-[10px] text-text-secondary">
+                    <span className="font-bold text-green">{UPPER_NAMES[i]}</span>
+                    <span className="opacity-60">({hex8(initials[i])})</span>
+                    <span>+</span>
+                    <span className="font-bold text-text-primary">{LOWER_NAMES[i]}</span>
+                    <span className="opacity-60">({hex8(finalLow[i])})</span>
+                  </div>
+                  <div className="flex items-center gap-1 font-mono text-[11px]">
+                    <span className="text-text-secondary">= new {UPPER_NAMES[i]}</span>
+                    <span className="font-bold text-green ml-auto">{hex8(val)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-text-secondary italic leading-relaxed">
+              {t("stateFlowAddBackNote")}
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Compression tab ───────────────────────────────────────────────────────────
 
 const VAR_COLORS: Record<string, string> = {
@@ -1060,6 +1210,9 @@ function CompressionTab({
         </div>
       </div>
 
+      {/* State flow: A–H ↔ a–h */}
+      <StateFlowDemo blockTrace={blockTrace} round={round} t={t} />
+
       {/* Operations */}
       <div>
         <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
@@ -1074,7 +1227,7 @@ function CompressionTab({
               <span className={cn("font-mono text-xs font-bold w-8 shrink-0", color)}>
                 {label}
               </span>
-              <span className="font-mono text-[11px] text-text-secondary flex-1 truncate">
+              <span className="font-mono text-[11px] text-text-secondary flex-1 min-w-0 break-words leading-tight">
                 {formula}
               </span>
               <span className="font-mono text-sm font-bold text-text-primary shrink-0">
