@@ -1119,6 +1119,14 @@ const VAR_COLORS: Record<string, string> = {
   h: "bg-bg-soft   text-text-secondary border-border",
 };
 
+// The 64 primes whose cube roots give the SHA-256 round constants (K)
+const K_PRIMES = [
+  2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
+  59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
+  137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223,
+  227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311
+];
+
 function CompressionTab({
   blockTrace,
   t,
@@ -1210,10 +1218,24 @@ function CompressionTab({
           <div className="rounded-lg bg-blue/8 border border-blue/20 px-3 py-2 text-[10px] text-text-secondary leading-relaxed">
             <span className="font-mono font-bold text-blue">K[{round}]</span>
             {" — "}
-            {t("roundKNote", { round, ordinal: ordinal(round + 1) })}
+            {(() => {
+              const prime = K_PRIMES[round];
+              const root = Math.pow(prime, 1/3);
+              return t.rich("roundKNote", {
+                round,
+                ordinal: ordinal(round + 1),
+                prime,
+                fullValue: root.toFixed(10) + "...",
+                fractional: (root % 1).toFixed(10).split(".")[1] + "...",
+                base10: new Intl.NumberFormat().format(r.k),
+                hex: hex8(r.k),
+                c: (chunks) => <span className="font-mono font-bold text-text-primary">{chunks}</span>
+              });
+            })()}
           </div>
         </div>
       </div>
+
 
       {/* Working variables */}
       <div>

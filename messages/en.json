@@ -324,7 +324,7 @@
     "stateFlowAddBackLabel": "After 64 rounds — add back to get new H[0..7]",
     "stateFlowAddBackNote": "New H[i] = initial H[i] + final working var (mod 2³²). This is why the hash changes completely with any input change.",
     "roundWNote": "W[{round}] is word {round} from the Schedule tab — expanded directly from your padded message.",
-    "roundKNote": "K[{round}] is a fixed constant: the first 32 bits of the fractional part of the cube root of the {ordinal} prime number. Like the initial H values, it is a \"nothing-up-my-sleeve\" number.",
+    "roundKNote": "K[{round}] is derived from the {ordinal} prime number ({prime}). The cube root <c>∛{prime} ≈ {fullValue}</c>. We take the fractional part (<c>0.{fractional}</c>), multiply it by 2³², and keep the integer portion: <c>{base10}</c> (which is <c>{hex}</c> in hex). Like the initial H values, these are \"nothing-up-my-sleeve\" numbers.",
     "hashWordsLabel": "Final state — H[0]–H[7]",
     "hashLabel": "SHA-256 hash",
     "hashDesc": "After all 64 rounds, each working variable is added back to the initial H value. The 8 resulting 32-bit words concatenated form the 256-bit (64 hex character) hash.",
