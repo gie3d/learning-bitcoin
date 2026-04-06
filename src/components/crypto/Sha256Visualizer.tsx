@@ -945,6 +945,14 @@ function ScheduleTab({
 
 const UPPER_NAMES = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 const LOWER_NAMES = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
+// The 8 primes whose square roots give the SHA-256 initialization vectors
+const IV_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19] as const;
+// Ordinal labels for K constants (cube roots of 1st–64th primes)
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
 
 // Colors for each slot (shared between uppercase and lowercase grids)
 const SLOT_COLORS = [
@@ -992,7 +1000,7 @@ function StateFlowDemo({
             <div
               key={i}
               className={cn(
-                "h-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1",
+                "h-[4.5rem] flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1",
                 SLOT_COLORS[i]
               )}
             >
@@ -1000,8 +1008,15 @@ function StateFlowDemo({
               <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
                 {hex8(val)}
               </span>
+              <span className="text-[8px] font-mono opacity-50">√{IV_PRIMES[i]}</span>
             </div>
           ))}
+        </div>
+        {/* IV origin callout */}
+        <div className="rounded-xl bg-white/70 border border-green/20 px-3 py-2.5 space-y-1">
+          <p className="text-[11px] text-text-secondary leading-relaxed">
+            {t("stateFlowIVOrigin")}
+          </p>
         </div>
       </div>
 
@@ -1184,6 +1199,19 @@ function CompressionTab({
         <div className="flex justify-between text-[10px] text-text-secondary font-mono mt-1">
           <span>W[{round}] = {hex8(r.w)}</span>
           <span>K[{round}] = {hex8(r.k)}</span>
+        </div>
+        {/* W and K source explanations */}
+        <div className="mt-3 space-y-1.5">
+          <div className="rounded-lg bg-orange/8 border border-orange/20 px-3 py-2 text-[10px] text-text-secondary leading-relaxed">
+            <span className="font-mono font-bold text-orange">W[{round}]</span>
+            {" — "}
+            {t("roundWNote", { round })}
+          </div>
+          <div className="rounded-lg bg-blue/8 border border-blue/20 px-3 py-2 text-[10px] text-text-secondary leading-relaxed">
+            <span className="font-mono font-bold text-blue">K[{round}]</span>
+            {" — "}
+            {t("roundKNote", { round, ordinal: ordinal(round + 1) })}
+          </div>
         </div>
       </div>
 
