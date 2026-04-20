@@ -297,6 +297,15 @@ export default function HowSHA256WorksPage() {
           </span>
           <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
         </Link>
+        <Link
+          href="/lessons/public-private-keys"
+          className="group flex items-center justify-between rounded-2xl bg-bg-soft border border-border p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
+        >
+          <span className="font-semibold text-text-primary group-hover:text-orange transition-colors">
+            {t("relatedKeys")}
+          </span>
+          <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
+        </Link>
       </div>
     </LessonLayout>
   );

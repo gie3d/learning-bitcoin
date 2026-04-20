@@ -98,6 +98,39 @@ export default function HomePage() {
                 </span>
               </div>
             </Link>
+            <Link
+              href="/lessons/public-private-keys"
+              className="group block rounded-3xl border border-border bg-white p-6
+                         shadow-card hover:shadow-card-hover
+                         transition-all duration-200 hover:-translate-y-0.5"
+            >
+              <div className="flex items-start gap-4">
+                <div className="text-4xl shrink-0 mt-0.5">🔑</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <Badge variant="intermediate">{d("intermediate")}</Badge>
+                    <Badge variant="default">{l("topic")}</Badge>
+                    <span className="text-xs text-text-secondary ml-auto">
+                      {t("publicPrivateKeyReadingTime")}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-text-primary group-hover:text-orange transition-colors mb-2">
+                    {t("publicPrivateKeyTitle")}
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    {t("publicPrivateKeyDescription")}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-sm">
+                <span className="text-text-secondary text-xs">
+                  Live demos · Generate &amp; explore
+                </span>
+                <span className="font-semibold text-orange group-hover:translate-x-1 transition-transform inline-block">
+                  {t("start")}
+                </span>
+              </div>
+            </Link>
           </div>
         </div>
 
