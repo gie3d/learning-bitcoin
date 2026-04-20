@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { LessonLayout } from "@/components/layout/LessonLayout";
 import { LessonHeader } from "@/components/lesson/LessonHeader";
