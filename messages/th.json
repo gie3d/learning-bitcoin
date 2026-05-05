@@ -31,7 +31,7 @@
     "beginner": "ระดับต้น",
     "intermediate": "ระดับกลาง",
     "advanced": "ระดับสูง",
-    "pendingReview": "รอการตรวจสอบ"
+    "pendingReview": "รอการตรวจสอบโดยมนุษย์"
   },
   "lesson": {
     "title": "ทำไม SHA-256 ถึงย้อนกลับไม่ได้?",
