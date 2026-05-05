@@ -44,6 +44,7 @@ export default function HomePage() {
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <Badge variant="intermediate">{d("intermediate")}</Badge>
                     <Badge variant="default">{l("topic")}</Badge>
+                    <Badge variant="review">{d("pendingReview")}</Badge>
                     <span className="text-xs text-text-secondary ml-auto">
                       {t("howSha256ReadingTime")}
                     </span>
@@ -77,6 +78,7 @@ export default function HomePage() {
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <Badge variant="intermediate">{d("intermediate")}</Badge>
                     <Badge variant="default">{l("topic")}</Badge>
+                    <Badge variant="review">{d("pendingReview")}</Badge>
                     <span className="text-xs text-text-secondary ml-auto">
                       {t("readingTime")}
                     </span>
@@ -110,6 +112,7 @@ export default function HomePage() {
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <Badge variant="intermediate">{d("intermediate")}</Badge>
                     <Badge variant="default">{l("topic")}</Badge>
+                    <Badge variant="review">{d("pendingReview")}</Badge>
                     <span className="text-xs text-text-secondary ml-auto">
                       {t("publicPrivateKeyReadingTime")}
                     </span>
@@ -151,6 +154,7 @@ export default function HomePage() {
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <Badge variant="intermediate">{d("intermediate")}</Badge>
                   <Badge variant="default">{l("topic")}</Badge>
+                  <Badge variant="review">{d("pendingReview")}</Badge>
                   <span className="text-xs font-semibold text-orange ml-auto">
                     {t("vizReadingTime")}
                   </span>

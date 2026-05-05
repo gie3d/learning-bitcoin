@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
-type BadgeVariant = "beginner" | "intermediate" | "advanced" | "default";
+type BadgeVariant = "beginner" | "intermediate" | "advanced" | "default" | "review";
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -13,6 +13,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   intermediate: "bg-orange-light text-orange border-orange/20",
   advanced: "bg-purple-light text-purple border-purple/20",
   default: "bg-bg-soft text-text-secondary border-border",
+  review: "bg-amber-50 text-amber-600 border-amber-200",
 };
 
 export function Badge({ variant = "default", children, className }: BadgeProps) {

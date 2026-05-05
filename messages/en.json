@@ -30,7 +30,8 @@
   "difficulty": {
     "beginner": "Beginner",
     "intermediate": "Intermediate",
-    "advanced": "Advanced"
+    "advanced": "Advanced",
+    "pendingReview": "Pending human review"
   },
   "lesson": {
     "title": "Why is SHA-256 irreversible?",

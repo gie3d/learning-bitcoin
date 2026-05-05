@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/Badge";
 
 type DifficultyVariant = "beginner" | "intermediate" | "advanced";
@@ -19,11 +20,14 @@ export function LessonHeader({
   readingTime,
   topic,
 }: LessonHeaderProps) {
+  const d = useTranslations("difficulty");
+
   return (
     <div className="mb-12">
       <div className="flex flex-wrap items-center gap-2 mb-6">
         <Badge variant={difficultyVariant}>{difficultyLabel}</Badge>
         <Badge variant="default">{topic}</Badge>
+        <Badge variant="review">{d("pendingReview")}</Badge>
         <span className="text-sm text-text-secondary ml-auto">{readingTime}</span>
       </div>
       <h1 className="text-4xl sm:text-5xl font-extrabold text-text-primary tracking-tight leading-tight mb-5">
