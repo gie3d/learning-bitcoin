@@ -1,23 +1,83 @@
+"use client";
+
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
-import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLocale } from "next-intl";
+import { useRouter, usePathname } from "next/navigation";
+import { useTransition, useState } from "react";
 
 export function SiteHeader() {
-  const t = useTranslations("nav");
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+  const [mode, setMode] = useState<"curious" | "builder">("curious");
+
+  const isTH = locale === "th";
+
+  function switchLocale(next: "en" | "th") {
+    if (next === locale) return;
+    const newPath = pathname.replace(`/${locale}`, `/${next}`);
+    startTransition(() => {
+      router.replace(newPath);
+    });
+  }
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 flex items-center justify-between h-16">
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-bold text-text-primary hover:opacity-70 transition-opacity"
-        >
-          <span className="text-xl">🪙</span>
-          <span className="text-sm">{t("brand")}</span>
+    <header className="topbar">
+      <div className="topbar-inner">
+        <Link href="/" className="brand">
+          <span className="brand-mark">
+            <span style={{ transform: "translateY(-1px)", display: "inline-block" }}>₿</span>
+          </span>
+          <span>
+            Bitcoin,{" "}
+            <em style={{ fontStyle: "italic", color: "var(--orange-deep)" }}>explained</em>
+          </span>
         </Link>
-        <nav className="flex items-center gap-2 text-sm">
-          <LanguageSwitcher />
+
+        <nav className="nav">
+          <Link href="/#lessons" className="nav-link">
+            {isTH ? "บทเรียน" : "Lessons"}
+          </Link>
+          <Link href="/#tools" className="nav-link">
+            {isTH ? "เครื่องมือ" : "Tools"}
+          </Link>
         </nav>
+
+        <div
+          className="mode-toggle"
+          title={isTH ? "โหมดผู้อ่าน" : "Audience mode — affects tone and depth"}
+        >
+          <button
+            className={mode === "curious" ? "active" : ""}
+            onClick={() => setMode("curious")}
+          >
+            {isTH ? "อยากรู้" : "Curious"}
+          </button>
+          <button
+            className={mode === "builder" ? "active" : ""}
+            onClick={() => setMode("builder")}
+          >
+            {isTH ? "นักพัฒนา" : "Builder"}
+          </button>
+        </div>
+
+        <div className="lang-toggle">
+          <button
+            className={locale === "en" ? "active" : ""}
+            onClick={() => switchLocale("en")}
+            disabled={isPending}
+          >
+            EN
+          </button>
+          <button
+            className={locale === "th" ? "active" : ""}
+            onClick={() => switchLocale("th")}
+            disabled={isPending}
+          >
+            TH
+          </button>
+        </div>
       </div>
     </header>
   );
