@@ -14,68 +14,118 @@ import { MessageScheduleDemo } from "@/components/crypto/MessageScheduleDemo";
 
 export default function HowSHA256WorksPage() {
   const t = useTranslations("howSha256");
-  const d = useTranslations("difficulty");
 
   return (
     <LessonLayout>
       <LessonHeader
         title={t("title")}
         subtitle={t("subtitle")}
-        difficultyVariant="intermediate"
-        difficultyLabel={d("intermediate")}
-        readingTime={t("readingTime")}
         topic={t("topic")}
+        readingTime={t("readingTime")}
+        lessonNum="Lesson 2 / 3"
       />
 
-      {/* Hook */}
-      <div className="mb-12 rounded-3xl overflow-hidden shadow-card border border-border">
-        <div className="px-5 py-3 text-xs font-semibold text-text-secondary bg-bg-soft">
-          {t("hookLabel")}
-        </div>
-        <div className="bg-code-bg px-5 py-4">
-          <p className="font-mono text-sm text-blue break-all leading-relaxed tracking-wide">
+      {/* §1 — SHA-256 in three phases */}
+      <ConceptSection eyebrow="§1" title={t("s1Title")}>
+        {/* Hook */}
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--r-lg)",
+            padding: 24,
+          }}
+        >
+          <div className="eyebrow" style={{ marginBottom: 12 }}>
+            {t("hookLabel")}
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 13,
+              lineHeight: 1.6,
+              wordBreak: "break-all",
+              color: "var(--orange-deep)",
+              padding: "12px 16px",
+              background: "var(--bg)",
+              borderRadius: "var(--r-sm)",
+            }}
+          >
             ba7816bf8f01cfea414140de5dae2ec73b00361bbef0469f8f9b64b96d7ff1a
+          </div>
+          <p style={{ marginTop: 16, fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6 }}>
+            {t("hookBody")}
           </p>
         </div>
-        <div className="bg-white px-5 py-4">
-          <p className="text-sm text-text-secondary leading-relaxed">{t("hookBody")}</p>
-        </div>
-      </div>
 
-      {/* Section 1: Three phases */}
-      <ConceptSection title={t("s1Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s1intro")}</p>
-        <div className="space-y-3">
+        <p>{t("s1intro")}</p>
+
+        {/* Phase tiles */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 20,
+          }}
+        >
           {(
             [
-              { key: "s1phase1", color: "text-orange", num: "01" },
-              { key: "s1phase2", color: "text-purple", num: "02" },
-              { key: "s1phase3", color: "text-blue",   num: "03" },
+              { num: "01", labelKey: "s1phase1Label", bodyKey: "s1phase1Body" },
+              { num: "02", labelKey: "s1phase2Label", bodyKey: "s1phase2Body" },
+              { num: "03", labelKey: "s1phase3Label", bodyKey: "s1phase3Body" },
             ] as const
-          ).map(({ key, color, num }) => (
+          ).map(({ num, labelKey, bodyKey }) => (
             <div
-              key={key}
-              className="flex gap-4 rounded-2xl bg-bg-soft border border-border p-4"
+              key={num}
+              style={{
+                padding: 24,
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--r-md)",
+                background: "var(--bg-card)",
+              }}
             >
-              <span className={`font-mono text-xs font-bold shrink-0 mt-0.5 ${color}`}>
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--orange-deep)",
+                  letterSpacing: "0.05em",
+                }}
+              >
                 {num}
-              </span>
-              <span className="text-sm text-text-secondary">
-                <strong className="text-text-primary">
-                  {t(`${key}Label` as Parameters<typeof t>[0])}
-                </strong>{" "}
-                — {t(`${key}Body` as Parameters<typeof t>[0])}
-              </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 22,
+                  marginTop: 8,
+                  letterSpacing: "-0.01em",
+                  color: "var(--ink)",
+                }}
+              >
+                {t(labelKey)}
+              </div>
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 14,
+                  color: "var(--ink-soft)",
+                  lineHeight: 1.55,
+                }}
+              >
+                {t(bodyKey)}
+              </div>
             </div>
           ))}
         </div>
-        <p className="text-text-secondary leading-relaxed">{t("s1tryIt")}</p>
+
+        <p>{t("s1tryIt")}</p>
         <HashSandbox />
       </ConceptSection>
 
-      {/* Section 2: Padding */}
-      <ConceptSection title={t("s2Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s2intro")}</p>
+      {/* §2 — Padding */}
+      <ConceptSection eyebrow="§2" title={t("s2Title")}>
+        <p>{t("s2intro")}</p>
         <StepExplainer
           steps={[
             {
@@ -116,42 +166,148 @@ export default function HowSHA256WorksPage() {
                 <>
                   <p>{t("step3bp1")}</p>
                   <p>{t("step3bp2")}</p>
-                  {/* Chain diagram */}
-                  <div className="rounded-2xl bg-code-bg border border-code-border p-5">
-                    <p className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-4">
+                  {/* Block chain diagram */}
+                  <div
+                    style={{
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--rule)",
+                      borderRadius: "var(--r-lg)",
+                      padding: 20,
+                    }}
+                  >
+                    <div className="eyebrow" style={{ marginBottom: 16 }}>
                       {t("step3bChainLabel")}
-                    </p>
-                    <div className="flex flex-col gap-2">
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {[1, 2, 3].map((n, i, arr) => (
                         <div key={n}>
-                          <div className="flex items-stretch gap-3">
-                            {/* Block input */}
-                            <div className="flex flex-col items-center justify-center rounded-xl border border-orange/30 bg-orange/10 px-4 py-3 min-w-[90px]">
-                              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wide">Block {n}</span>
-                              <span className="font-mono text-xs text-orange mt-0.5">512 bits</span>
+                          <div style={{ display: "flex", alignItems: "stretch", gap: 12 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: "1px solid var(--orange-soft)",
+                                background: "var(--orange-tint)",
+                                borderRadius: 12,
+                                padding: "12px 16px",
+                                minWidth: 80,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-mono)",
+                                  fontSize: 10,
+                                  color: "var(--ink-soft)",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                Block {n}
+                              </span>
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-mono)",
+                                  fontSize: 12,
+                                  color: "var(--orange-deep)",
+                                  marginTop: 4,
+                                }}
+                              >
+                                512 bits
+                              </span>
                             </div>
-                            {/* Arrow + compress box */}
-                            <div className="flex items-center gap-2 flex-1">
-                              <span className="text-text-secondary text-xs">→</span>
-                              <div className="flex flex-col items-center justify-center rounded-xl border border-purple/30 bg-purple/10 px-4 py-3 flex-1">
-                                <span className="text-[10px] font-semibold text-purple uppercase tracking-wide">Compression</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
+                              <span style={{ color: "var(--ink-mute)", fontSize: 12 }}>→</span>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  border: "1px solid var(--teal-soft)",
+                                  background: "rgba(44,122,123,0.08)",
+                                  borderRadius: 12,
+                                  padding: "12px 16px",
+                                  flex: 1,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontFamily: "var(--font-mono)",
+                                    fontSize: 10,
+                                    color: "var(--teal)",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.05em",
+                                  }}
+                                >
+                                  Compression
+                                </span>
                               </div>
-                              <span className="text-text-secondary text-xs">→</span>
+                              <span style={{ color: "var(--ink-mute)", fontSize: 12 }}>→</span>
                             </div>
-                            {/* Output state */}
-                            <div className="flex flex-col items-center justify-center rounded-xl border border-blue/30 bg-blue/10 px-4 py-3 min-w-[90px]">
-                              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wide">
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: "1px solid var(--rule)",
+                                background: "var(--bg-card)",
+                                borderRadius: 12,
+                                padding: "12px 16px",
+                                minWidth: 80,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-mono)",
+                                  fontSize: 10,
+                                  color: "var(--ink-soft)",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
                                 {i === arr.length - 1 ? "Final hash" : "State out"}
                               </span>
-                              <span className="font-mono text-xs text-blue mt-0.5">256 bits</span>
+                              <span
+                                style={{
+                                  fontFamily: "var(--font-mono)",
+                                  fontSize: 12,
+                                  color: "var(--teal)",
+                                  marginTop: 4,
+                                }}
+                              >
+                                256 bits
+                              </span>
                             </div>
                           </div>
-                          {/* Downward arrow between rows */}
                           {i < arr.length - 1 && (
-                            <div className="flex justify-end pr-[calc(90px/2+0.75rem)] mt-1 mb-1">
-                              <div className="flex flex-col items-center gap-0.5">
-                                <span className="text-[10px] text-text-secondary font-medium">becomes initial state</span>
-                                <span className="text-text-secondary text-xs">↓</span>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                paddingRight: "calc(80px / 2 + 12px)",
+                                margin: "4px 0",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  gap: 2,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontFamily: "var(--font-mono)",
+                                    fontSize: 10,
+                                    color: "var(--ink-mute)",
+                                  }}
+                                >
+                                  becomes initial state
+                                </span>
+                                <span style={{ color: "var(--ink-mute)", fontSize: 12 }}>↓</span>
                               </div>
                             </div>
                           )}
@@ -167,9 +323,9 @@ export default function HowSHA256WorksPage() {
         />
       </ConceptSection>
 
-      {/* Section 3: Message Schedule */}
-      <ConceptSection title={t("s3Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s3intro")}</p>
+      {/* §3 — Message schedule */}
+      <ConceptSection eyebrow="§3" title={t("s3Title")}>
+        <p>{t("s3intro")}</p>
         <StepExplainer
           steps={[
             {
@@ -197,9 +353,9 @@ export default function HowSHA256WorksPage() {
         />
       </ConceptSection>
 
-      {/* Section 4: Compression */}
-      <ConceptSection title={t("s4Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s4intro")}</p>
+      {/* §4 — Compression */}
+      <ConceptSection eyebrow="§4" title={t("s4Title")}>
+        <p>{t("s4intro")}</p>
         <StepExplainer
           steps={[
             {
@@ -237,74 +393,165 @@ export default function HowSHA256WorksPage() {
         />
       </ConceptSection>
 
-      {/* Section 5: Bitcoin context */}
-      <ConceptSection title={t("s5Title")}>
-        <p className="text-text-secondary leading-relaxed">{t("s5intro")}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-3xl border border-border bg-orange-light p-5">
-            <div className="text-2xl mb-3">⛏️</div>
-            <h3 className="text-sm font-bold text-text-primary mb-2">{t("s5miningTitle")}</h3>
-            <p className="text-sm text-text-secondary leading-relaxed">{t("s5miningBody")}</p>
-          </div>
-          <div className="rounded-3xl border border-border bg-bg-soft p-5">
-            <div className="text-2xl mb-3">📜</div>
-            <h3 className="text-sm font-bold text-text-primary mb-2">{t("s5txTitle")}</h3>
-            <p className="text-sm text-text-secondary leading-relaxed">{t("s5txBody")}</p>
-          </div>
-          <div className="rounded-3xl border border-border bg-purple-light p-5">
-            <div className="text-2xl mb-3">🌳</div>
-            <h3 className="text-sm font-bold text-text-primary mb-2">{t("s5merkleTitle")}</h3>
-            <p className="text-sm text-text-secondary leading-relaxed">{t("s5merkleBody")}</p>
-          </div>
-          <div className="rounded-3xl border border-border bg-blue-light p-5">
-            <div className="text-2xl mb-3">🔑</div>
-            <h3 className="text-sm font-bold text-text-primary mb-2">{t("s5addressTitle")}</h3>
-            <p className="text-sm text-text-secondary leading-relaxed">{t("s5addressBody")}</p>
-          </div>
+      {/* §5 — Bitcoin context */}
+      <ConceptSection eyebrow="§5" title={t("s5Title")}>
+        <p>{t("s5intro")}</p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 20,
+          }}
+        >
+          {(
+            [
+              { num: "01", title: t("s5miningTitle"), body: t("s5miningBody") },
+              { num: "02", title: t("s5txTitle"), body: t("s5txBody") },
+              { num: "03", title: t("s5merkleTitle"), body: t("s5merkleBody") },
+              { num: "04", title: t("s5addressTitle"), body: t("s5addressBody") },
+            ] as const
+          ).map(({ num, title, body }) => (
+            <div
+              key={num}
+              style={{
+                padding: 24,
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--r-md)",
+                background: "var(--bg-card)",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--orange-deep)",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {num}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 22,
+                  marginTop: 8,
+                  letterSpacing: "-0.01em",
+                  color: "var(--ink)",
+                }}
+              >
+                {title}
+              </div>
+              <div
+                style={{ marginTop: 8, fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.55 }}
+              >
+                {body}
+              </div>
+            </div>
+          ))}
         </div>
         <Callout variant="insight">{t("s5callout")}</Callout>
       </ConceptSection>
 
       {/* Visualizer CTA */}
-      <div className="mt-12 rounded-3xl overflow-hidden shadow-card border border-border">
-        <div className="px-5 py-3 text-xs font-semibold text-text-secondary"
-          style={{ background: "linear-gradient(90deg, var(--color-orange-light), var(--color-purple-light))" }}>
-          {t("visualizerCtaLabel")}
-        </div>
-        <div className="bg-white px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-          <p className="text-sm text-text-secondary leading-relaxed">{t("visualizerCtaBody")}</p>
-          <Link
-            href="/tools/sha256-visualizer"
-            className="shrink-0 rounded-2xl bg-orange px-4 py-2 text-sm font-semibold text-white
-                       hover:bg-orange/90 transition-colors"
+      <div className="page-narrow" style={{ paddingTop: 40, paddingBottom: 0 }}>
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--r-lg)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="eyebrow"
+            style={{
+              padding: "12px 20px",
+              borderBottom: "1px solid var(--rule-soft)",
+              background: "linear-gradient(90deg, var(--orange-tint), var(--bg-card))",
+            }}
           >
-            {t("visualizerCtaBtn")}
-          </Link>
+            {t("visualizerCtaLabel")}
+          </div>
+          <div
+            style={{
+              padding: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0, flex: 1 }}>
+              {t("visualizerCtaBody")}
+            </p>
+            <Link
+              href="/tools/sha256-visualizer"
+              className="btn btn-orange"
+              style={{ flexShrink: 0 }}
+            >
+              {t("visualizerCtaBtn")}
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Related lesson */}
-      <div className="mt-8 pt-8 border-t border-border">
-        <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary mb-3">
+      {/* Editorial next-lesson nav */}
+      <div
+        className="page-narrow"
+        style={{ marginTop: 80, paddingTop: 40, borderTop: "1px solid var(--rule)" }}
+      >
+        <div className="eyebrow" style={{ marginBottom: 0 }}>
           {t("relatedLabel")}
-        </p>
+        </div>
         <Link
           href="/lessons/sha256-irreversibility"
-          className="group flex items-center justify-between rounded-2xl bg-bg-soft border border-border p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            padding: "24px 0",
+            textDecoration: "none",
+            borderBottom: "1px solid var(--rule-soft)",
+          }}
         >
-          <span className="font-semibold text-text-primary group-hover:text-orange transition-colors">
+          <h3
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 32,
+              letterSpacing: "-0.015em",
+              fontWeight: 400,
+              color: "var(--ink)",
+              margin: 0,
+            }}
+          >
             {t("relatedNext")}
+          </h3>
+          <span
+            style={{
+              fontFamily: "var(--font-display)",
+              fontStyle: "italic",
+              fontSize: 32,
+              color: "var(--orange-deep)",
+              flexShrink: 0,
+              paddingLeft: 24,
+            }}
+          >
+            →
           </span>
-          <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
         </Link>
         <Link
           href="/lessons/public-private-keys"
-          className="group flex items-center justify-between rounded-2xl bg-bg-soft border border-border p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "20px 0",
+            textDecoration: "none",
+          }}
         >
-          <span className="font-semibold text-text-primary group-hover:text-orange transition-colors">
-            {t("relatedKeys")}
-          </span>
-          <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
+          <span style={{ fontSize: 16, color: "var(--ink-soft)" }}>{t("relatedKeys")}</span>
+          <span style={{ color: "var(--ink-mute)", fontSize: 18 }}>→</span>
         </Link>
       </div>
     </LessonLayout>

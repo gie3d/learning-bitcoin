@@ -11,7 +11,7 @@ export function LessonLayout({ children }: LessonLayoutProps) {
     <>
       <ProgressBar />
       <SiteHeader />
-      <main className="mx-auto max-w-lesson px-4 sm:px-6 py-12 sm:py-16">
+      <main style={{ paddingBottom: 100 }}>
         {children}
       </main>
       <Footer />
