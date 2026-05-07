@@ -1,95 +1,777 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { sha256trace, type Sha256Trace, type Sha256BlockTrace } from "@/lib/crypto/sha256trace";
-import { cn } from "@/lib/utils/cn";
+import { useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { sha256trace } from "@/lib/crypto/sha256trace";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function hex8(n: number): string {
-  return "0x" + n.toString(16).padStart(8, "0").toUpperCase();
+  return n.toString(16).padStart(8, "0");
 }
 function hex2(n: number): string {
   return n.toString(16).padStart(2, "0");
 }
 
-type Tab = "padding" | "schedule" | "compression" | "hash";
+// ── ByteGrid ──────────────────────────────────────────────────────────────────
 
-// ── Tab bar ───────────────────────────────────────────────────────────────────
-
-function TabBar({
-  active,
-  onChange,
-  labels,
+function ByteGrid({
+  bytes,
+  highlightFn,
+  max = 192,
+  label,
 }: {
-  active: Tab;
-  onChange: (t: Tab) => void;
-  labels: Record<Tab, string>;
+  bytes: number[];
+  highlightFn?: (
+    byte: number,
+    index: number
+  ) => { bg?: string; color?: string; border?: string } | null;
+  max?: number;
+  label?: string;
 }) {
-  const tabs: Tab[] = ["padding", "schedule", "compression", "hash"];
+  const visible = bytes.slice(0, max);
   return (
-    <div className="flex gap-1 rounded-2xl bg-bg-soft border border-border p-1">
-      {tabs.map((t) => (
-        <button
-          key={t}
-          onClick={() => onChange(t)}
-          className={cn(
-            "flex-1 rounded-xl px-2 py-2 text-xs font-semibold transition-colors",
-            active === t
-              ? "bg-white text-text-primary shadow-card"
-              : "text-text-secondary hover:text-text-primary"
-          )}
+    <div>
+      {label && (
+        <div
+          className="eyebrow"
+          style={{ marginBottom: 8 }}
         >
-          {labels[t]}
-        </button>
+          {label}
+        </div>
+      )}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(16, minmax(0, 1fr))",
+          gap: 4,
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+        }}
+      >
+        {visible.map((b, i) => {
+          const hl = highlightFn ? highlightFn(b, i) : null;
+          return (
+            <div
+              key={i}
+              title={`byte ${i}: 0x${hex2(b)}`}
+              style={{
+                background: hl?.bg || "var(--bg-card)",
+                color: hl?.color || "var(--ink)",
+                border: `1px solid ${hl?.border || "var(--rule)"}`,
+                padding: "6px 0",
+                textAlign: "center",
+                borderRadius: 4,
+                transition: "all 0.15s",
+              }}
+            >
+              {hex2(b)}
+            </div>
+          );
+        })}
+      </div>
+      {bytes.length > max && (
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 12,
+            color: "var(--ink-mute)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          + {bytes.length - max} more bytes
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+
+function Legend({
+  items,
+}: {
+  items: { color: string; border?: string; text: string }[];
+}) {
+  return (
+    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      {items.map((it, i) => (
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            color: "var(--ink-soft)",
+          }}
+        >
+          <span
+            style={{
+              width: 14,
+              height: 14,
+              background: it.color,
+              borderRadius: 3,
+              border: `1px solid ${it.border || "var(--rule)"}`,
+              display: "inline-block",
+              flexShrink: 0,
+            }}
+          />
+          {it.text}
+        </div>
       ))}
     </div>
   );
 }
 
-// ── Block picker ──────────────────────────────────────────────────────────────
+// ── WordGrid ──────────────────────────────────────────────────────────────────
 
-function BlockPicker({
-  numBlocks,
-  selected,
-  onChange,
-  label,
+function WordGrid({
+  words,
+  highlightFn,
 }: {
-  numBlocks: number;
-  selected: number;
-  onChange: (b: number) => void;
-  label: string;
+  words: number[];
+  highlightFn?: (index: number) => { bg: string; border: string; color: string };
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide shrink-0">
-        {label}:
-      </span>
-      <div className="flex flex-wrap gap-1">
-        {Array.from({ length: numBlocks }, (_, i) => (
-          <button
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(8, 1fr)",
+        gap: 8,
+        fontFamily: "var(--font-mono)",
+        fontSize: 11,
+      }}
+    >
+      {words.map((w, i) => {
+        const hl = highlightFn
+          ? highlightFn(i)
+          : {
+              bg: i < 16 ? "var(--orange-tint)" : "var(--bg)",
+              border: i < 16 ? "var(--orange-soft)" : "var(--rule)",
+              color: i < 16 ? "var(--orange-deep)" : "var(--ink-soft)",
+            };
+        return (
+          <div
             key={i}
-            onClick={() => onChange(i)}
-            className={cn(
-              "rounded-lg px-3 py-1 text-xs font-bold transition-colors",
-              selected === i
-                ? "bg-orange text-white"
-                : "bg-bg-soft text-text-secondary border border-border hover:text-text-primary"
-            )}
+            style={{
+              padding: "8px 6px",
+              background: hl.bg,
+              border: `1px solid ${hl.border}`,
+              borderRadius: 4,
+              textAlign: "center",
+              color: hl.color,
+            }}
           >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+            <div style={{ fontSize: 9, opacity: 0.6, marginBottom: 2 }}>
+              W[{i}]
+            </div>
+            {hex8(w)}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// ── Hash bar ──────────────────────────────────────────────────────────────────
+// ── Stage 0: Message ──────────────────────────────────────────────────────────
 
-function HashBar({ hash, label }: { hash: string; label: string }) {
+function StageMessage({
+  bytes,
+  isEn,
+}: {
+  bytes: number[];
+  isEn: boolean;
+}) {
+  return (
+    <section>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr 1fr",
+          gap: 40,
+          alignItems: "start",
+        }}
+        className="max-sm:block max-sm:space-y-8"
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(24px, 3vw, 32px)",
+              letterSpacing: "-0.02em",
+              fontWeight: 400,
+              marginBottom: 16,
+              lineHeight: 1.15,
+            }}
+          >
+            {isEn ? (
+              <>
+                First,{" "}
+                <em style={{ color: "var(--orange-deep)" }}>
+                  encode it as bytes
+                </em>
+                .
+              </>
+            ) : (
+              <>
+                ก่อนอื่น{" "}
+                <em style={{ color: "var(--orange-deep)" }}>
+                  เปลี่ยนเป็นไบต์
+                </em>
+              </>
+            )}
+          </h2>
+          <p
+            style={{
+              fontSize: 16,
+              color: "var(--ink-soft)",
+              lineHeight: 1.65,
+              marginBottom: 20,
+            }}
+          >
+            {isEn
+              ? "SHA-256 operates on bytes, not characters. UTF-8 encoding turns your text into a sequence of bytes — ASCII characters take 1 byte, others take 2–4."
+              : "SHA-256 ทำงานกับไบต์ ไม่ใช่ตัวอักษร การเข้ารหัส UTF-8 แปลงข้อความเป็นลำดับไบต์ — อักขระ ASCII ใช้ 1 ไบต์ อื่นๆ ใช้ 2–4 ไบต์"}
+          </p>
+          <div
+            style={{
+              padding: "12px 16px",
+              background: "var(--orange-tint)",
+              border: "1px solid var(--orange-soft)",
+              borderRadius: "var(--r-md)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 13,
+              color: "var(--orange-deep)",
+            }}
+          >
+            {bytes.length} {isEn ? "bytes" : "ไบต์"} · {bytes.length * 8}{" "}
+            {isEn ? "bits" : "บิต"}
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--r-lg)",
+            padding: 20,
+          }}
+        >
+          <ByteGrid
+            bytes={bytes}
+            label={isEn ? "Message bytes (hex)" : "ไบต์ของข้อความ (hex)"}
+            highlightFn={() => ({
+              bg: "var(--orange-tint)",
+              border: "var(--orange-soft)",
+              color: "var(--orange-deep)",
+            })}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Stage 1: Padding ──────────────────────────────────────────────────────────
+
+function StagePadding({
+  paddedBytes,
+  originalLen,
+  isEn,
+}: {
+  paddedBytes: number[];
+  originalLen: number;
+  isEn: boolean;
+}) {
+  const total = paddedBytes.length;
+
+  return (
+    <section>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr 1fr",
+          gap: 40,
+          alignItems: "start",
+        }}
+        className="max-sm:block max-sm:space-y-8"
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(24px, 3vw, 32px)",
+              letterSpacing: "-0.02em",
+              fontWeight: 400,
+              marginBottom: 16,
+              lineHeight: 1.15,
+            }}
+          >
+            {isEn ? (
+              <>
+                Pad to a{" "}
+                <em style={{ color: "var(--orange-deep)" }}>
+                  multiple of 512 bits
+                </em>
+                .
+              </>
+            ) : (
+              <>
+                เติมให้ครบ{" "}
+                <em style={{ color: "var(--orange-deep)" }}>512 บิต</em>
+              </>
+            )}
+          </h2>
+          <p
+            style={{
+              fontSize: 16,
+              color: "var(--ink-soft)",
+              lineHeight: 1.65,
+              marginBottom: 20,
+            }}
+          >
+            {isEn
+              ? "SHA-256 processes 512-bit (64-byte) blocks. Append a single 0x80 byte immediately after the message, then zero bytes, then the original message length as a 64-bit big-endian integer."
+              : "SHA-256 ประมวลผลทีละบล็อก 512 บิต เติมไบต์ 0x80 ทันทีหลังข้อความ แล้วเติมศูนย์ และสุดท้ายเขียนความยาวต้นฉบับเป็น 64 บิต"}
+          </p>
+          <Legend
+            items={[
+              {
+                color: "var(--orange-tint)",
+                border: "var(--orange-soft)",
+                text: isEn ? "Original message" : "ข้อความเดิม",
+              },
+              {
+                color: "var(--teal-soft)",
+                border: "var(--teal)",
+                text: isEn ? "End marker (0x80)" : "ตัวบอกจุดสิ้นสุด (0x80)",
+              },
+              {
+                color: "var(--rule-soft)",
+                border: "var(--rule)",
+                text: isEn ? "Zero padding" : "ศูนย์ที่เติม",
+              },
+              {
+                color: "#FCE0E0",
+                border: "#E89090",
+                text: isEn ? "Length (64 bits)" : "ความยาว (64 บิต)",
+              },
+            ]}
+          />
+        </div>
+
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--r-lg)",
+            padding: 20,
+          }}
+        >
+          <ByteGrid
+            bytes={paddedBytes}
+            label={
+              isEn
+                ? `padded → ${total} bytes`
+                : `padded → ${total} ไบต์`
+            }
+            highlightFn={(_, i) => {
+              if (i < originalLen)
+                return {
+                  bg: "var(--orange-tint)",
+                  border: "var(--orange-soft)",
+                  color: "var(--orange-deep)",
+                };
+              if (i === originalLen)
+                return {
+                  bg: "var(--teal-soft)",
+                  border: "var(--teal)",
+                  color: "var(--teal)",
+                };
+              if (i >= total - 8)
+                return {
+                  bg: "#FCE0E0",
+                  border: "#E89090",
+                  color: "var(--red)",
+                };
+              return {
+                bg: "var(--rule-soft)",
+                border: "var(--rule)",
+                color: "var(--ink-mute)",
+              };
+            }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Stage 2: Schedule ─────────────────────────────────────────────────────────
+
+function StageSchedule({
+  schedule,
+  isEn,
+}: {
+  schedule: number[];
+  isEn: boolean;
+}) {
+  return (
+    <section>
+      <div style={{ marginBottom: 28 }}>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(24px, 3vw, 32px)",
+            letterSpacing: "-0.02em",
+            fontWeight: 400,
+            marginBottom: 14,
+            lineHeight: 1.15,
+          }}
+        >
+          {isEn ? (
+            <>
+              Expand to{" "}
+              <em style={{ color: "var(--orange-deep)" }}>64 words</em>.
+            </>
+          ) : (
+            <>
+              ขยายเป็น{" "}
+              <em style={{ color: "var(--orange-deep)" }}>64 คำ</em>
+            </>
+          )}
+        </h2>
+        <p
+          style={{
+            fontSize: 16,
+            color: "var(--ink-soft)",
+            lineHeight: 1.65,
+            maxWidth: 680,
+          }}
+        >
+          {isEn
+            ? "Each 512-bit block gives 16 × 32-bit words (W[0]–W[15]). SHA-256 expands these to 64 words by mixing earlier values with rotation (σ₀, σ₁) and XOR. Each new word depends on four previous ones."
+            : "บล็อก 512 บิตแต่ละบล็อกให้ 16 คำ 32 บิต (W[0]–W[15]) SHA-256 ขยายเป็น 64 คำโดยผสมค่าก่อนหน้าด้วย rotation (σ₀, σ₁) และ XOR แต่ละคำใหม่ขึ้นอยู่กับสี่คำก่อนหน้า"}
+        </p>
+      </div>
+
+      <div
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--rule)",
+          borderRadius: "var(--r-lg)",
+          padding: 24,
+        }}
+      >
+        <WordGrid words={schedule} />
+        <div
+          style={{
+            marginTop: 16,
+            display: "flex",
+            gap: 24,
+            fontSize: 12,
+            color: "var(--ink-mute)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          <span>
+            <span style={{ color: "var(--orange-deep)" }}>●</span>{" "}
+            {isEn ? "from message block (W[0]–W[15])" : "จากบล็อกข้อมูล"}
+          </span>
+          <span>
+            <span style={{ color: "var(--ink-soft)" }}>●</span>{" "}
+            {isEn ? "derived via σ₀ ⊕ σ₁ (W[16]–W[63])" : "ขยายผ่าน σ₀ ⊕ σ₁"}
+          </span>
+        </div>
+      </div>
+
+      {/* Formula card */}
+      <div
+        style={{
+          marginTop: 20,
+          padding: "16px 20px",
+          background: "var(--bg-card)",
+          border: "1px solid var(--rule)",
+          borderRadius: "var(--r-md)",
+          fontFamily: "var(--font-mono)",
+          fontSize: 13,
+          lineHeight: 1.8,
+          color: "var(--ink-soft)",
+        }}
+      >
+        <div style={{ color: "var(--ink)", marginBottom: 4 }}>
+          W[i] = σ₁(W[i−2]) + W[i−7] + σ₀(W[i−15]) + W[i−16]
+        </div>
+        <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>
+          σ₀(x) = rotr(x,7) ^ rotr(x,18) ^ shr(x,3)
+        </div>
+        <div style={{ fontSize: 11, color: "var(--ink-mute)" }}>
+          σ₁(x) = rotr(x,17) ^ rotr(x,19) ^ shr(x,10)
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Stage 3: Rounds ───────────────────────────────────────────────────────────
+
+const VAR_LABELS = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
+
+function StageRounds({
+  blockTrace,
+  round,
+  setRound,
+  isEn,
+}: {
+  blockTrace: ReturnType<typeof sha256trace>["blocks"][0];
+  round: number;
+  setRound: (r: number) => void;
+  isEn: boolean;
+}) {
+  const r = blockTrace.rounds[round];
+  const vars = [r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h];
+
+  return (
+    <section>
+      <div
+        style={{
+          marginBottom: 24,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <div style={{ maxWidth: 600 }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(24px, 3vw, 32px)",
+              letterSpacing: "-0.02em",
+              fontWeight: 400,
+              marginBottom: 12,
+              lineHeight: 1.15,
+            }}
+          >
+            {isEn ? (
+              <>
+                The{" "}
+                <em style={{ color: "var(--orange-deep)" }}>64 rounds</em> of
+                compression.
+              </>
+            ) : (
+              <>
+                <em style={{ color: "var(--orange-deep)" }}>64 รอบ</em>{" "}
+                ของการบีบอัด
+              </>
+            )}
+          </h2>
+          <p style={{ fontSize: 16, color: "var(--ink-soft)", lineHeight: 1.65 }}>
+            {isEn
+              ? "Each round mixes W[i], constant K[i], and the 8 working variables (a–h) using Σ₁, Ch, Maj, and Σ₀ functions. Scrub the slider to step through all 64 rounds."
+              : "แต่ละรอบผสม W[i], ค่าคงที่ K[i] และตัวแปร 8 ตัว (a–h) ด้วย Σ₁, Ch, Maj และ Σ₀ ลากแถบเพื่อดูทุกรอบ"}
+          </p>
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 14,
+            padding: "8px 16px",
+            background: "var(--orange-tint)",
+            color: "var(--orange-deep)",
+            borderRadius: 999,
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {isEn ? "Round" : "รอบที่"} {round} / 63
+        </div>
+      </div>
+
+      <div
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--rule)",
+          borderRadius: "var(--r-lg)",
+          padding: 28,
+        }}
+      >
+        {/* Working variables a–h */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(8, 1fr)",
+            gap: 10,
+            marginBottom: 28,
+          }}
+          className="max-sm:grid-cols-4"
+        >
+          {vars.map((val, i) => (
+            <div
+              key={i}
+              style={{
+                padding: "14px 8px",
+                background: "var(--bg)",
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--r-md)",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontStyle: "italic",
+                  fontSize: 22,
+                  color: "var(--orange-deep)",
+                  lineHeight: 1,
+                  marginBottom: 8,
+                }}
+              >
+                {VAR_LABELS[i]}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  color: "var(--ink)",
+                  wordBreak: "break-all",
+                }}
+              >
+                {hex8(val)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Round scrubber */}
+        <input
+          type="range"
+          min={0}
+          max={63}
+          value={round}
+          onChange={(e) => setRound(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "var(--orange)" }}
+        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-mute)",
+            marginTop: 4,
+          }}
+        >
+          <span>Round 0</span>
+          <span>Round 63</span>
+        </div>
+
+        {/* Round operations */}
+        <div
+          style={{
+            marginTop: 20,
+            padding: 16,
+            background: "var(--bg)",
+            borderRadius: "var(--r-sm)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 13,
+            lineHeight: 1.8,
+            color: "var(--ink-soft)",
+          }}
+        >
+          <div>
+            T1 = h + Σ₁(e) + Ch(e,f,g) + K[{round}] + W[{round}]
+          </div>
+          <div>T2 = Σ₀(a) + Maj(a,b,c)</div>
+          <div style={{ color: "var(--orange-deep)", marginTop: 4 }}>
+            (a,b,c,d,e,f,g,h) ← (T1+T2, a, b, c, d+T1, e, f, g)
+          </div>
+        </div>
+
+        {/* Values row */}
+        <div
+          style={{
+            marginTop: 16,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 8,
+          }}
+          className="max-sm:grid-cols-1"
+        >
+          {[
+            {
+              label: `W[${round}]`,
+              value: `0x${hex8(r.w)}`,
+              note: isEn ? "from schedule" : "จาก schedule",
+            },
+            {
+              label: `K[${round}]`,
+              value: `0x${hex8(r.k)}`,
+              note: isEn ? "round constant" : "ค่าคงที่รอบ",
+            },
+            {
+              label: "T1",
+              value: `0x${hex8(r.t1)}`,
+              note: isEn ? "temp value 1" : "ค่าชั่วคราว 1",
+            },
+          ].map(({ label, value, note }) => (
+            <div
+              key={label}
+              style={{
+                padding: "10px 14px",
+                background: "var(--orange-tint)",
+                border: "1px solid var(--orange-soft)",
+                borderRadius: "var(--r-sm)",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  color: "var(--orange-deep)",
+                  opacity: 0.7,
+                  marginBottom: 2,
+                }}
+              >
+                {label} — {note}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 13,
+                  color: "var(--orange-deep)",
+                  fontWeight: 500,
+                }}
+              >
+                {value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Stage 4: Digest ───────────────────────────────────────────────────────────
+
+function StageDigest({
+  hash,
+  input,
+  finalState,
+  isEn,
+}: {
+  hash: string;
+  input: string;
+  finalState: number[];
+  isEn: boolean;
+}) {
   const [copied, setCopied] = useState(false);
+
   const copy = () => {
     navigator.clipboard.writeText(hash);
     setCopied(true);
@@ -97,1293 +779,119 @@ function HashBar({ hash, label }: { hash: string; label: string }) {
   };
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-border">
-      <div className="flex items-center gap-3 bg-code-bg px-4 py-3">
-        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest shrink-0">
-          {label}
-        </span>
-        <p className="font-mono text-xs text-blue break-all leading-relaxed flex-1 min-w-0">
-          {hash}
-        </p>
-        <button
-          onClick={copy}
-          className="text-[10px] font-semibold text-orange hover:text-orange/70 transition-colors shrink-0"
-        >
-          {copied ? "✓" : "Copy"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Padding tab ───────────────────────────────────────────────────────────────
-
-type ByteKind = "message" | "pad-start" | "zero" | "length";
-
-const byteStyles: Record<ByteKind, string> = {
-  message:    "bg-green/10  text-green  border-green/30  font-semibold",
-  "pad-start":"bg-orange/10 text-orange border-orange/30 font-semibold",
-  zero:       "bg-bg-soft text-text-secondary/40 border-border",
-  length:     "bg-blue/10  text-blue   border-blue/30  font-semibold",
-};
-
-function PaddingTab({
-  trace,
-  blockTrace,
-  t,
-}: {
-  trace: Sha256Trace;
-  blockTrace: Sha256BlockTrace;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const msgLen = trace.msgLen;
-  const totalPaddedLen = trace.allPaddedBytes.length;
-  const blockStart = blockTrace.blockIndex * 64;
-  const isLastBlock = blockTrace.blockIndex === trace.numBlocks - 1;
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-text-secondary leading-relaxed">{t("paddingDesc")}</p>
-      <div className="rounded-2xl bg-code-bg border border-code-border p-4">
-        <div className="grid grid-cols-8 sm:[grid-template-columns:repeat(16,minmax(2rem,1fr))] gap-1">
-          {Array.from(blockTrace.paddedBytes).map((byte, i) => {
-            const globalIndex = blockStart + i;
-            let kind: ByteKind;
-            if (globalIndex < msgLen) kind = "message";
-            else if (globalIndex === msgLen) kind = "pad-start";
-            else if (isLastBlock && i >= 56) kind = "length";
-            else kind = "zero";
-
-            return (
-              <div
-                key={i}
-                className={cn(
-                  "flex items-center justify-center rounded-md border text-[10px] font-mono h-7",
-                  byteStyles[kind]
-                )}
-                title={kind === "message" ? `'${String.fromCharCode(byte)}'` : kind}
-              >
-                {hex2(byte)}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3">
-        {(
-          [
-            { kind: "message",   label: t("legendMessage") },
-            { kind: "pad-start", label: t("legendPadStart") },
-            { kind: "zero",      label: t("legendZero") },
-            { kind: "length",    label: t("legendLength") },
-          ] as { kind: ByteKind; label: string }[]
-        ).map(({ kind, label }) => (
-          <div key={kind} className="flex items-center gap-1.5">
-            <div className={cn("w-3 h-3 rounded border", byteStyles[kind])} />
-            <span className="text-xs text-text-secondary">{label}</span>
-          </div>
-        ))}
-      </div>
-      <p className="text-xs font-mono text-text-secondary bg-bg-soft rounded-xl px-3 py-2">
-        {t("statsLine", { bytes: msgLen, total: totalPaddedLen, blocks: trace.numBlocks })}
-      </p>
-    </div>
-  );
-}
-
-// ── 8-bit ops demo primitives ─────────────────────────────────────────────────
-
-function rotr8(val: number, n: number): number {
-  n = ((n % 8) + 8) % 8;
-  return n === 0 ? val : (((val >>> n) | (val << (8 - n))) & 0xff);
-}
-function toBits8(val: number): number[] {
-  return Array.from({ length: 8 }, (_, i) => (val >> (7 - i)) & 1);
-}
-
-function Bit8({
-  on,
-  onClick,
-  color = "bg-blue",
-}: {
-  on: boolean;
-  onClick?: () => void;
-  color?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      className={cn(
-        "w-6 h-6 rounded-md font-mono text-[10px] font-bold transition-all select-none border",
-        on ? `${color} text-white border-transparent` : "bg-bg-soft text-text-secondary border-border",
-        onClick ? "cursor-pointer hover:opacity-75 active:scale-95" : "cursor-default"
-      )}
-    >
-      {on ? "1" : "0"}
-    </button>
-  );
-}
-
-function BitRow8({
-  label,
-  val,
-  onToggle,
-  color,
-  hint,
-  dropped,
-}: {
-  label: string;
-  val: number;
-  onToggle?: (i: number) => void;
-  color?: string;
-  hint?: string;
-  dropped?: boolean[];  // marks bits that were shifted off
-}) {
-  const bits = toBits8(val);
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-      <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">{label}</span>
-      <div className="flex gap-1">
-        {bits.map((b, i) => (
-          <Bit8
-            key={i}
-            on={b === 1}
-            onClick={onToggle ? () => onToggle(i) : undefined}
-            color={dropped?.[i] ? "bg-text-secondary/30" : color}
-          />
-        ))}
-      </div>
-      {hint && <span className="hidden sm:inline text-[10px] text-text-secondary/60 italic">{hint}</span>}
-    </div>
-  );
-}
-
-function OpdivDivider({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-2 my-1">
-      <div className="flex-1 h-px bg-border" />
-      <span className="font-mono text-[10px] text-text-secondary">{label}</span>
-      <div className="flex-1 h-px bg-border" />
-    </div>
-  );
-}
-
-// ── ROTR 8-bit demo ───────────────────────────────────────────────────────────
-
-function RotrDemo8() {
-  const [val, setVal] = useState(0b01100100);
-  const [n, setN] = useState(3);
-  const [animStep, setAnimStep] = useState(0);
-  const [playing, setPlaying] = useState(false);
-
-  useEffect(() => {
-    if (!playing) return;
-    if (animStep >= n) { setPlaying(false); return; }
-    const timer = setTimeout(() => setAnimStep((s) => s + 1), 500);
-    return () => clearTimeout(timer);
-  }, [playing, animStep, n]);
-
-  const toggle = (i: number) => {
-    setVal((v) => v ^ (1 << (7 - i)));
-    setAnimStep(0);
-    setPlaying(false);
-  };
-
-  const currentAnimVal = rotr8(val, animStep);
-  const result = rotr8(val, n);
-  const animBits = toBits8(currentAnimVal);
-
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] text-text-secondary leading-relaxed">
-        Bits are shifted right by <strong>n</strong> positions. Bits that fall off the right end wrap back to the left.
-        Click bits to flip. Use the slider to change rotation amount.
-      </p>
-
-      <div className="space-y-2">
-        <BitRow8 label="x (input)" val={val} onToggle={toggle} color="bg-blue" hint="← click to flip" />
-        <BitRow8 label={`rotr(x, ${n})`} val={result} color="bg-purple" />
-      </div>
-
-      {/* Amount slider */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">rotation n =</span>
-        <input
-          type="range" min={1} max={7} value={n}
-          onChange={(e) => { setN(+e.target.value); setAnimStep(0); setPlaying(false); }}
-          className="flex-1 accent-purple"
-        />
-        <span className="font-mono text-xs font-bold text-purple w-4">{n}</span>
-      </div>
-
-      {/* Animated step visualizer */}
-      <div className="rounded-xl bg-bg-soft border border-border/60 p-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-            Step-by-step — {animStep}/{n}
-          </span>
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => {
-                if (animStep >= n) setAnimStep(0);
-                setPlaying((p) => !p);
-              }}
-              className="h-6 px-2.5 text-[10px] font-bold rounded-lg bg-orange text-white hover:opacity-90 active:scale-95 transition-all"
-            >
-              {playing ? "Pause" : animStep >= n ? "Reset" : "Play"}
-            </button>
-            <button
-              onClick={() => { setAnimStep(0); setPlaying(false); }}
-              className="h-6 px-2.5 text-[10px] font-bold rounded-lg border border-border text-text-secondary hover:bg-white active:scale-95 transition-all"
-            >
-              ↺
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-1 justify-center">
-          {animBits.map((b, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <Bit8 on={b === 1} color="bg-purple" />
-              <span className="text-[8px] font-mono text-text-secondary/40">{i}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-[10px] text-center font-mono text-text-secondary/60">
-          {animStep === 0
-            ? "Press Play to animate one step at a time"
-            : animStep < n
-            ? `Rotated ${animStep} of ${n} — bits wrap from right to left`
-            : `Done — ${n} rotation${n > 1 ? "s" : ""} applied`}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ── SHR 8-bit demo ────────────────────────────────────────────────────────────
-
-function ShrDemo8() {
-  const [val, setVal] = useState(0b11001010);
-  const [n, setN] = useState(3);
-
-  const toggle = (i: number) => setVal((v) => v ^ (1 << (7 - i)));
-  const result = (val >>> n) & 0xff;
-
-  // Which bits of the *input* were shifted off (rightmost n bits)
-  const droppedInput: boolean[] = toBits8(val).map((_, i) => i >= 8 - n);
-  // Which bits of the *result* are the filled zeros (leftmost n bits)
-  const filledZero: boolean[] = toBits8(result).map((_, i) => i < n);
-
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] text-text-secondary leading-relaxed">
-        Bits are shifted right by <strong>n</strong> positions. Bits that fall off the right edge are
-        <span className="font-bold text-red-500"> permanently lost</span>. Zeros fill in from the left — unlike ROTR, nothing wraps.
-      </p>
-
-      <div className="space-y-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-          <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">x (input)</span>
-          <div className="flex gap-1">
-            {toBits8(val).map((b, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit8 on={b === 1} onClick={() => toggle(i)} color={droppedInput[i] ? "bg-text-secondary/40" : "bg-blue"} />
-                {droppedInput[i] && <span className="text-[8px] text-red-400 font-bold">✕</span>}
-              </div>
-            ))}
-          </div>
-          <span className="hidden sm:inline text-[10px] text-text-secondary/60 italic">← click to flip</span>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-          <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">{`shr(x, ${n})`}</span>
-          <div className="flex gap-1">
-            {toBits8(result).map((b, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit8 on={b === 1} color={filledZero[i] ? "bg-bg-soft" : "bg-purple"} />
-                {filledZero[i] && <span className="text-[8px] text-text-secondary/40 font-bold">0</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Amount slider */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[10px] text-text-secondary sm:w-28 sm:shrink-0">shift n =</span>
-        <input
-          type="range" min={1} max={7} value={n}
-          onChange={(e) => setN(+e.target.value)}
-          className="flex-1 accent-purple"
-        />
-        <span className="font-mono text-xs font-bold text-purple w-4">{n}</span>
-      </div>
-
-      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
-        <span className="font-semibold text-text-primary">Why irreversible: </span>
-        The {n} rightmost bit{n > 1 ? "s" : ""} are gone. Given only the result, you cannot recover what those bit{n > 1 ? "s were" : " was"}.
-      </div>
-    </div>
-  );
-}
-
-// ── XOR 8-bit demo ────────────────────────────────────────────────────────────
-
-function XorDemo8() {
-  const [a, setA] = useState(0b11001010);
-  const [b, setB] = useState(0b01110011);
-
-  const result = (a ^ b) & 0xff;
-  const aBits = toBits8(a);
-  const bBits = toBits8(b);
-  const rBits = toBits8(result);
-
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] text-text-secondary leading-relaxed">
-        XOR outputs <strong>1</strong> when the two input bits differ, <strong>0</strong> when they match.
-        The result bit is colored by which input is &quot;dominant&quot; — but since both are equal contributors, you cannot recover either input from the result alone.
-      </p>
-
-      <div className="space-y-2">
-        <BitRow8 label="a" val={a} onToggle={(i) => setA((v) => v ^ (1 << (7 - i)))} color="bg-blue" hint="← click to flip" />
-        <BitRow8 label="b" val={b} onToggle={(i) => setB((v) => v ^ (1 << (7 - i)))} color="bg-purple" />
-        <OpdivDivider label="a ^ b ↓" />
-        <div className="flex items-center gap-2">
-          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">result</span>
-          <div className="flex gap-1">
-            {rBits.map((bit, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit8
-                  on={bit === 1}
-                  color={aBits[i] !== bBits[i] ? "bg-orange" : "bg-bg-soft"}
-                />
-                <span className="font-mono text-[8px] text-text-secondary/50">
-                  {aBits[i] !== bBits[i] ? "≠" : "="}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
-        <span className="font-semibold text-text-primary">Why irreversible: </span>
-        Given result bit = 1, you know a ≠ b — but you don{"'"}t know if a=0,b=1 or a=1,b=0. Both inputs are equally valid; the XOR destroys which was which.
-      </div>
-    </div>
-  );
-}
-
-// ── AND 8-bit demo ────────────────────────────────────────────────────────────
-
-function AndDemo8() {
-  const [a, setA] = useState(0b11001010);
-  const [b, setB] = useState(0b10110011);
-
-  const result = (a & b) & 0xff;
-  const aBits = toBits8(a);
-  const bBits = toBits8(b);
-  const rBits = toBits8(result);
-
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] text-text-secondary leading-relaxed">
-        AND outputs <strong>1</strong> only when <em>both</em> input bits are 1. If either input is 0, the result is 0.
-        Used in <strong>Ch</strong> and <strong>Maj</strong> to combine working variables.
-      </p>
-
-      <div className="space-y-2">
-        <BitRow8 label="a" val={a} onToggle={(i) => setA((v) => v ^ (1 << (7 - i)))} color="bg-blue" hint="← click to flip" />
-        <BitRow8 label="b" val={b} onToggle={(i) => setB((v) => v ^ (1 << (7 - i)))} color="bg-purple" />
-        <OpdivDivider label="a & b ↓" />
-        <div className="flex items-center gap-2">
-          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">result</span>
-          <div className="flex gap-1">
-            {rBits.map((bit, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit8
-                  on={bit === 1}
-                  color={aBits[i] === 1 && bBits[i] === 1 ? "bg-green" : "bg-bg-soft"}
-                />
-                <span className="font-mono text-[8px] text-text-secondary/50">
-                  {aBits[i] === 1 && bBits[i] === 1 ? "1" : "0"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
-        <span className="font-semibold text-text-primary">In Ch: </span>
-        <span className="font-mono">(e & f)</span> picks f{"'"}s bits wherever e is 1.{" "}
-        <span className="font-mono">(~e & g)</span> picks g{"'"}s bits wherever e is 0. Together, e acts as a selector between f and g.
-      </div>
-    </div>
-  );
-}
-
-// ── NOT 8-bit demo ────────────────────────────────────────────────────────────
-
-function NotDemo8() {
-  const [val, setVal] = useState(0b10110100);
-
-  const result = (~val) & 0xff;
-  const toggle = (i: number) => setVal((v) => v ^ (1 << (7 - i)));
-
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] text-text-secondary leading-relaxed">
-        NOT (<strong>~</strong>) flips every bit: 0 becomes 1, 1 becomes 0. It{"'"}s a bitwise complement.
-        In SHA-256, <span className="font-mono">~e</span> is used so that wherever e is 0, we read from g instead of f.
-      </p>
-
-      <div className="space-y-2">
-        <BitRow8 label="x (input)" val={val} onToggle={toggle} color="bg-blue" hint="← click to flip" />
-        <OpdivDivider label="~x ↓" />
-        <div className="flex items-center gap-2">
-          <span className="w-28 shrink-0 font-mono text-[10px] text-text-secondary">~x</span>
-          <div className="flex gap-1">
-            {toBits8(result).map((bit, i) => (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <Bit8 on={bit === 1} color="bg-purple" />
-                <span className="font-mono text-[8px] text-text-secondary/50">
-                  {toBits8(val)[i] === 1 ? "↓0" : "↑1"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2 text-[11px] text-text-secondary">
-        <span className="font-semibold text-text-primary">In Ch: </span>
-        <span className="font-mono">Ch = (e & f) ^ (~e & g)</span> — every bit of e picks between f (if 1) and g (if 0). ~e inverts e so the second AND selects the opposite positions.
-      </div>
-    </div>
-  );
-}
-
-// ── σ0/σ1 explainer with embedded demos ──────────────────────────────────────
-
-type OpsTab = "rotr" | "shr" | "xor";
-
-function SigmaExplainer({ t }: { t: ReturnType<typeof useTranslations> }) {
-  const [activeOp, setActiveOp] = useState<OpsTab>("rotr");
-  const ops: OpsTab[] = ["rotr", "shr", "xor"];
-  const opLabels: Record<OpsTab, string> = { rotr: "ROTR", shr: "SHR", xor: "XOR" };
-
-  return (
-    <div className="rounded-2xl border border-purple/20 bg-purple/5 p-4 space-y-4">
-      {/* Title + description */}
-      <div className="space-y-1.5">
-        <p className="text-xs font-bold text-purple">{t("sigmaExplainerTitle")}</p>
-        <p className="text-xs text-text-secondary leading-relaxed">{t("sigmaExplainerDesc")}</p>
-      </div>
-
-      {/* Formula cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {[
-          { formula: t("sigma0Formula"), applied: t("sigma0AppliedTo") },
-          { formula: t("sigma1Formula"), applied: t("sigma1AppliedTo") },
-        ].map(({ formula, applied }) => (
-          <div key={formula} className="rounded-xl bg-code-bg border border-code-border px-3 py-2.5 space-y-1">
-            <p className="font-mono text-[11px] text-code-text">{formula}</p>
-            <p className="text-[10px] text-text-secondary italic">{applied}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Operation demos */}
-      <div className="space-y-3 pt-1 border-t border-purple/15">
-        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-          8-bit interactive demos
-        </p>
-        {/* Op tab bar */}
-        <div className="flex gap-1 rounded-xl bg-white/60 border border-purple/15 p-0.5">
-          {ops.map((op) => (
-            <button
-              key={op}
-              onClick={() => setActiveOp(op)}
-              className={cn(
-                "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-colors",
-                activeOp === op
-                  ? "bg-purple text-white shadow-sm"
-                  : "text-text-secondary hover:text-purple"
-              )}
-            >
-              {opLabels[op]}
-            </button>
-          ))}
-        </div>
-        {/* Demo content */}
-        <div className="bg-white rounded-xl border border-purple/15 px-4 py-3">
-          {activeOp === "rotr" && <RotrDemo8 />}
-          {activeOp === "shr"  && <ShrDemo8 />}
-          {activeOp === "xor"  && <XorDemo8 />}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── σ0/σ1 popover steps (used inside expansion popover) ───────────────────────
-
-function SigmaSteps({
-  fn,
-  wordIndex,
-  value,
-  t,
-}: {
-  fn: "σ0" | "σ1";
-  wordIndex: number;
-  value: number;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const isSigma0 = fn === "σ0";
-  const [r1, r2, shift] = isSigma0 ? [7, 18, 3] : [17, 19, 10];
-
-  const rot1   = (((value >>> r1)    | (value << (32 - r1)))    >>> 0);
-  const rot2   = (((value >>> r2)    | (value << (32 - r2)))    >>> 0);
-  const shrVal = (value >>> shift) >>> 0;
-  const result = (rot1 ^ rot2 ^ shrVal) >>> 0;
-
-  const steps = [
-    { label: `rotr(W[${wordIndex}], ${r1})`,  value: rot1,   color: "text-purple" },
-    { label: `rotr(W[${wordIndex}], ${r2})`,  value: rot2,   color: "text-purple" },
-    { label: `shr(W[${wordIndex}], ${shift})`, value: shrVal, color: "text-blue" },
-  ];
-
-  return (
-    <div className="space-y-2">
-      <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
-        {t("sigmaStepsLabel", { fn, i: wordIndex })}
-      </p>
-      <div className="space-y-1">
-        {steps.map(({ label, value: v, color }) => (
-          <div key={label} className="flex items-center justify-between rounded-lg bg-bg-soft border border-border px-3 py-1.5">
-            <span className={cn("font-mono text-[11px]", color)}>{label}</span>
-            <span className="font-mono text-[11px] font-bold text-text-primary">{hex8(v)}</span>
-          </div>
-        ))}
-        <div className="flex items-center justify-between rounded-lg bg-orange/10 border border-orange/30 px-3 py-1.5">
-          <span className="font-mono text-[11px] font-bold text-orange">{t("sigmaXorResult")}</span>
-          <span className="font-mono text-[11px] font-bold text-orange">{hex8(result)}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Compression operations explainer ─────────────────────────────────────────
-
-type CompressOpsTab = "s1" | "s0" | "and" | "not";
-
-function CompressionExplainer({ t }: { t: ReturnType<typeof useTranslations> }) {
-  const [activeTab, setActiveTab] = useState<CompressOpsTab>("s1");
-
-  const tabs: { id: CompressOpsTab; label: string }[] = [
-    { id: "s1",  label: "S1" },
-    { id: "s0",  label: "S0" },
-    { id: "and", label: t("compExplainerTabAnd") },
-    { id: "not", label: t("compExplainerTabNot") },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-blue/20 bg-blue/5 p-4 space-y-4">
-      {/* Title */}
-      <div className="space-y-1">
-        <p className="text-xs font-bold text-blue">{t("compExplainerTitle")}</p>
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          {t("compExplainerSubtitle")}
-        </p>
-      </div>
-
-      {/* A–H vs a–h callout */}
-      <div className="rounded-xl bg-orange/5 border border-orange/20 px-3 py-2.5 space-y-1.5">
-        <p className="text-[11px] font-semibold text-text-primary">{t("compExplainerVarsTitle")}</p>
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          <span className="font-mono font-bold text-text-primary">a, b, c, d, e, f, g, h</span>{" "}
-          {t("compExplainerVarsLower")}
-        </p>
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          <span className="font-mono font-bold text-text-primary">A, B, C, D, E, F, G, H</span>{" "}
-          {t("compExplainerVarsUpper")}
-        </p>
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          {t("compExplainerVarsAfter")}
-        </p>
-      </div>
-
-      {/* Tab bar */}
-      <div className="flex gap-1 rounded-xl bg-white/60 border border-blue/15 p-0.5">
-        {tabs.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={cn(
-              "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-colors",
-              activeTab === id
-                ? "bg-blue text-white shadow-sm"
-                : "text-text-secondary hover:text-blue"
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      <div className="bg-white rounded-xl border border-blue/15 px-4 py-3 space-y-3">
-        {(activeTab === "s1" || activeTab === "s0") && (
+    <section>
+      <h2
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "clamp(24px, 3vw, 32px)",
+          letterSpacing: "-0.02em",
+          fontWeight: 400,
+          marginBottom: 16,
+          lineHeight: 1.15,
+        }}
+      >
+        {isEn ? (
           <>
-            <div className="rounded-lg bg-code-bg border border-code-border px-3 py-2 space-y-1">
-              {activeTab === "s1" ? (
-                <>
-                  <p className="font-mono text-[11px] text-code-text">S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)</p>
-                  <p className="text-[10px] text-text-secondary italic">{t("compExplainerS1Note")}</p>
-                </>
-              ) : (
-                <>
-                  <p className="font-mono text-[11px] text-code-text">S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)</p>
-                  <p className="text-[10px] text-text-secondary italic">{t("compExplainerS0Note")}</p>
-                </>
-              )}
-            </div>
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              {t("compExplainerRotrDesc")}{" "}
-              {activeTab === "s1" ? t("compExplainerS1Note2") : t("compExplainerS0Note2")}
-            </p>
-            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-              {t("compExplainerDemoLabel")}
-            </p>
-            <RotrDemo8 />
+            And here is your{" "}
+            <em style={{ color: "var(--orange-deep)" }}>fingerprint</em>.
+          </>
+        ) : (
+          <>
+            นี่คือ{" "}
+            <em style={{ color: "var(--orange-deep)" }}>ลายนิ้วมือ</em> ของคุณ
           </>
         )}
-        {activeTab === "and" && <AndDemo8 />}
-        {activeTab === "not" && <NotDemo8 />}
-      </div>
-    </div>
-  );
-}
+      </h2>
+      <p
+        style={{
+          fontSize: 16,
+          color: "var(--ink-soft)",
+          lineHeight: 1.65,
+          marginBottom: 32,
+          maxWidth: 600,
+        }}
+      >
+        {isEn
+          ? "After processing every 512-bit block, the final values of a–h are concatenated. That's 256 bits — 64 hex characters — a unique fingerprint of your input."
+          : "หลังประมวลผลทุกบล็อก ค่าสุดท้ายของ a–h ถูกนำมาต่อกัน ได้ 256 บิต = 64 ตัวอักษร hex — ลายนิ้วมือเฉพาะของข้อมูลคุณ"}
+      </p>
 
-// ── Schedule tab ──────────────────────────────────────────────────────────────
-
-function WordCard({
-  index,
-  value,
-  color,
-  onClick,
-  selected,
-}: {
-  index: number;
-  value: number;
-  color: string;
-  onClick?: () => void;
-  selected?: boolean;
-}) {
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "h-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1 transition-all",
-        color,
-        onClick && "cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5",
-        selected && "ring-2 ring-purple ring-offset-1"
-      )}
-    >
-      <span className="text-[9px] font-semibold uppercase tracking-wide opacity-60">
-        W[{index}]
-      </span>
-      <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
-        {hex8(value)}
-      </span>
-    </div>
-  );
-}
-
-function ScheduleTab({
-  blockTrace,
-  t,
-}: {
-  blockTrace: Sha256BlockTrace;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const [selected, setSelected] = useState<number | null>(null);
-
-  const handleClick = useCallback((i: number) => {
-    setSelected((prev) => (prev === i ? null : i));
-  }, []);
-
-  const W = blockTrace.schedule;
-  const sel = selected;
-
-  function expansionValues(i: number) {
-    const im2  = i - 2;
-    const im7  = i - 7;
-    const im15 = i - 15;
-    const im16 = i - 16;
-    return {
-      s1_val:  W[im2]  !== undefined ? hex8(W[im2])  : "?",
-      w7_val:  W[im7]  !== undefined ? hex8(W[im7])  : "?",
-      s0_val:  W[im15] !== undefined ? hex8(W[im15]) : "?",
-      w16_val: W[im16] !== undefined ? hex8(W[im16]) : "?",
-      result:  hex8(W[i]),
-      im2, im7, im15, im16,
-    };
-  }
-
-  return (
-    <div className="space-y-5">
-      <p className="text-sm text-text-secondary leading-relaxed">{t("scheduleDesc")}</p>
-
-      {/* W[0-15] */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("scheduleInitLabel")} — W[0]–W[15]
-        </p>
-        <div className="rounded-2xl bg-code-bg border border-code-border p-4">
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-            {W.slice(0, 16).map((w, i) => {
-              const color =
-                w !== 0 && i < 15
-                  ? "bg-orange/10 text-orange border-orange/30"
-                  : i === 15
-                  ? "bg-blue/10 text-blue border-blue/30"
-                  : "bg-bg-soft text-text-secondary/40 border-border";
-              return <WordCard key={i} index={i} value={w} color={color} />;
-            })}
-          </div>
+      {/* Main hash display */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--orange-soft)",
+          borderRadius: "var(--r-lg)",
+          padding: 32,
+          textAlign: "center",
+          marginBottom: 20,
+        }}
+      >
+        <div className="eyebrow" style={{ marginBottom: 12 }}>
+          SHA-256(&quot;{input.slice(0, 40)}{input.length > 40 ? "…" : ""}&quot;)
         </div>
-      </div>
-
-      {/* W[16-63] */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("scheduleGenLabel")} — W[16]–W[63]
-          <span className="ml-2 normal-case font-normal">{t("scheduleClickHint")}</span>
-        </p>
-        <div className="rounded-2xl bg-code-bg border border-code-border p-4">
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-            {W.slice(16).map((w, j) => {
-              const i = j + 16;
-              return (
-                <WordCard
-                  key={i}
-                  index={i}
-                  value={w}
-                  color={
-                    sel === i
-                      ? "bg-purple/20 text-purple border-purple/50"
-                      : "bg-purple/10 text-purple border-purple/30"
-                  }
-                  selected={sel === i}
-                  onClick={() => handleClick(i)}
-                />
-              );
-            })}
-          </div>
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "clamp(13px, 1.6vw, 17px)",
+            wordBreak: "break-all",
+            lineHeight: 1.65,
+            color: "var(--orange-deep)",
+            letterSpacing: "0.02em",
+            fontWeight: 500,
+          }}
+        >
+          {hash}
         </div>
-
-        {/* Expansion popover */}
-        {sel !== null && (
-          <div className="mt-3 rounded-2xl bg-white border border-purple/30 p-4 space-y-4">
-            <p className="text-[10px] font-semibold text-purple uppercase tracking-widest">
-              {t("expansionTitle", { i: sel })}
-            </p>
-            {/* Formula */}
-            <div className="rounded-xl bg-code-bg border border-code-border px-4 py-3 font-mono text-sm text-code-text overflow-x-auto">
-              W[{sel}] = σ1(W[{sel - 2}]) + W[{sel - 7}] + σ0(W[{sel - 15}]) + W[{sel - 16}]
-            </div>
-            {/* Values grid */}
-            {(() => {
-              const { s1_val, w7_val, s0_val, w16_val, result, im2, im7, im15, im16 } = expansionValues(sel);
-              return (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
-                  {[
-                    { label: `σ1(W[${im2}])`,  value: s1_val,  color: "text-purple bg-purple/10 border-purple/30" },
-                    { label: `W[${im7}]`,       value: w7_val,  color: "text-text-secondary bg-bg-soft border-border" },
-                    { label: `σ0(W[${im15}])`, value: s0_val,  color: "text-text-secondary bg-bg-soft border-border" },
-                    { label: `W[${im16}]`,      value: w16_val, color: "text-text-secondary bg-bg-soft border-border" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className={cn("rounded-xl border px-3 py-2 flex flex-col gap-0.5", color)}>
-                      <span className="text-[10px] opacity-70 uppercase tracking-wide">{label}</span>
-                      <span className="font-bold">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-            {/* Result */}
-            <div className="flex items-center justify-between rounded-xl bg-orange/10 border border-orange/30 px-4 py-2.5">
-              <span className="font-mono text-sm font-semibold text-text-primary">W[{sel}] =</span>
-              <span className="font-mono font-bold text-orange">{hex8(W[sel])}</span>
-            </div>
-
-            {/* σ0/σ1 step-by-step breakdown */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-border">
-              {W[sel - 15] !== undefined && (
-                <SigmaSteps fn="σ0" wordIndex={sel - 15} value={W[sel - 15]} t={t} />
-              )}
-              {W[sel - 2] !== undefined && (
-                <SigmaSteps fn="σ1" wordIndex={sel - 2} value={W[sel - 2]} t={t} />
-              )}
-            </div>
-          </div>
-        )}
+        <button
+          onClick={copy}
+          style={{
+            marginTop: 16,
+            padding: "7px 16px",
+            borderRadius: 999,
+            fontSize: 13,
+            fontWeight: 500,
+            background: copied ? "var(--orange)" : "transparent",
+            color: copied ? "white" : "var(--ink-mute)",
+            border: "1px solid var(--rule)",
+            cursor: "pointer",
+            transition: "all 0.15s",
+          }}
+        >
+          {copied ? (isEn ? "Copied!" : "คัดลอกแล้ว!") : isEn ? "Copy hash" : "คัดลอกแฮช"}
+        </button>
       </div>
 
-      {/* σ0/σ1 explainer with interactive demos */}
-      <SigmaExplainer t={t} />
-    </div>
-  );
-}
-
-// ── State flow demo (A–H ↔ a–h) ──────────────────────────────────────────────
-
-const UPPER_NAMES = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
-const LOWER_NAMES = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
-// The 8 primes whose square roots give the SHA-256 initialization vectors
-const IV_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19] as const;
-// Ordinal labels for K constants (cube roots of 1st–64th primes)
-function ordinal(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
-}
-
-// Colors for each slot (shared between uppercase and lowercase grids)
-const SLOT_COLORS = [
-  "bg-orange/10 text-orange border-orange/30",
-  "bg-purple/10 text-purple border-purple/30",
-  "bg-blue/10   text-blue   border-blue/30",
-  "bg-bg-soft   text-text-secondary border-border",
-  "bg-orange/10 text-orange border-orange/30",
-  "bg-purple/10 text-purple border-purple/30",
-  "bg-blue/10   text-blue   border-blue/30",
-  "bg-bg-soft   text-text-secondary border-border",
-];
-
-function StateFlowDemo({
-  blockTrace,
-  round,
-  t,
-}: {
-  blockTrace: Sha256BlockTrace;
-  round: number;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const initials = blockTrace.initialState; // A,B,C,D,E,F,G,H
-  const r = blockTrace.rounds[round];
-  const currentLow = [r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h];
-
-  // Final working vars after round 63 (what gets added back)
-  const last = blockTrace.rounds[63];
-  const finalLow = [last.a_new, last.a, last.b, last.c, last.e_new, last.e, last.f, last.g];
-
-  const isRound0 = round === 0;
-  const isRound63 = round === 63;
-
-  return (
-    <div className="rounded-2xl border border-green/20 bg-green/5 p-4 space-y-4">
-      <p className="text-xs font-bold text-green">{t("stateFlowTitle")}</p>
-
-      {/* Initial H (uppercase) */}
-      <div className="space-y-2">
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
-          {t("stateFlowInitLabel")}
-        </p>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-          {initials.map((val, i) => (
-            <div
-              key={i}
-              className={cn(
-                "h-[4.5rem] flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1",
-                SLOT_COLORS[i]
-              )}
-            >
-              <span className="text-[10px] font-bold uppercase">{UPPER_NAMES[i]}</span>
-              <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
-                {hex8(val)}
-              </span>
-              <span className="text-[8px] font-mono opacity-50">√{IV_PRIMES[i]}</span>
-            </div>
-          ))}
-        </div>
-        {/* IV origin callout */}
-        <div className="rounded-xl bg-white/70 border border-green/20 px-3 py-2.5 space-y-1">
-          <p className="text-[11px] text-text-secondary leading-relaxed">
-            {t("stateFlowIVOrigin")}
-          </p>
-        </div>
-      </div>
-
-      {/* Arrow + note */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-px bg-green/20" />
-        <span className="text-[10px] text-green font-semibold">
-          {isRound0 ? "↓ copied → a,b,c,d,e,f,g,h" : `↓ round 0 copy, now at round ${round}`}
-        </span>
-        <div className="flex-1 h-px bg-green/20" />
-      </div>
-
-      {/* Current working vars (lowercase) */}
-      <div className="space-y-2">
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
-          {t("stateFlowWorkingLabel", { round })}
-        </p>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-          {currentLow.map((val, i) => {
-            const matches = val === initials[i];
-            return (
-              <div
-                key={i}
-                className={cn(
-                  "h-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1 transition-colors",
-                  isRound0
-                    ? "bg-green/10 text-green border-green/40"
-                    : SLOT_COLORS[i],
-                  !isRound0 && matches && "ring-1 ring-green/40"
-                )}
-              >
-                <span className="text-[10px] font-bold">{LOWER_NAMES[i]}</span>
-                <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
-                  {hex8(val)}
-                </span>
-                {isRound0 && (
-                  <span className="text-[8px] text-green font-bold">= {UPPER_NAMES[i]}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {isRound0 && (
-          <p className="text-[11px] text-green font-semibold text-center">{t("stateFlowMatchNote")}</p>
-        )}
-      </div>
-
-      {/* Add-back (shown at round 63) */}
-      {isRound63 && (
-        <>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-green/20" />
-            <span className="text-[10px] text-green font-semibold">↓ 64 rounds complete</span>
-            <div className="flex-1 h-px bg-green/20" />
-          </div>
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
-              {t("stateFlowAddBackLabel")}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {blockTrace.finalState.map((val, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl bg-white border border-green/30 px-3 py-2 space-y-1"
-                >
-                  <div className="flex items-center gap-1 font-mono text-[10px] text-text-secondary">
-                    <span className="font-bold text-green">{UPPER_NAMES[i]}</span>
-                    <span className="opacity-60">({hex8(initials[i])})</span>
-                    <span>+</span>
-                    <span className="font-bold text-text-primary">{LOWER_NAMES[i]}</span>
-                    <span className="opacity-60">({hex8(finalLow[i])})</span>
-                  </div>
-                  <div className="flex items-center gap-1 font-mono text-[11px]">
-                    <span className="text-text-secondary">= new {UPPER_NAMES[i]}</span>
-                    <span className="font-bold text-green ml-auto">{hex8(val)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-text-secondary italic leading-relaxed">
-              {t("stateFlowAddBackNote")}
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Compression tab ───────────────────────────────────────────────────────────
-
-const VAR_COLORS: Record<string, string> = {
-  a: "bg-orange/10 text-orange border-orange/30",
-  b: "bg-purple/10 text-purple border-purple/30",
-  c: "bg-blue/10   text-blue   border-blue/30",
-  d: "bg-bg-soft   text-text-secondary border-border",
-  e: "bg-orange/10 text-orange border-orange/30",
-  f: "bg-purple/10 text-purple border-purple/30",
-  g: "bg-blue/10   text-blue   border-blue/30",
-  h: "bg-bg-soft   text-text-secondary border-border",
-};
-
-// The 64 primes whose cube roots give the SHA-256 round constants (K)
-const K_PRIMES = [
-  2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
-  59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
-  137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223,
-  227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311
-];
-
-function CompressionTab({
-  blockTrace,
-  t,
-}: {
-  blockTrace: Sha256BlockTrace;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const [round, setRound] = useState(0);
-  const r = blockTrace.rounds[round];
-
-  const vars: [string, number][] = [
-    ["a", r.a], ["b", r.b], ["c", r.c], ["d", r.d],
-    ["e", r.e], ["f", r.f], ["g", r.g], ["h", r.h],
-  ];
-
-  const ops = [
-    { label: "S1",  formula: `rotr(e,6) ^ rotr(e,11) ^ rotr(e,25)`, value: r.s1,  color: "text-blue" },
-    { label: "Ch",  formula: `(e & f) ^ (~e & g)`,                value: r.ch,  color: "text-purple" },
-    { label: "T1",  formula: `h + S1 + Ch + K[${round}] + W[${round}]`, value: r.t1, color: "text-orange" },
-    { label: "S0",  formula: `rotr(a,2) ^ rotr(a,13) ^ rotr(a,22)`, value: r.s0,  color: "text-blue" },
-    { label: "Maj", formula: `(a & b) ^ (a & c) ^ (b & c)`,       value: r.maj, color: "text-green" },
-    { label: "T2",  formula: `S0 + Maj`,                           value: r.t2,  color: "text-orange" },
-  ];
-
-  return (
-    <div className="space-y-5">
-      {/* Overview */}
-      <div className="rounded-2xl bg-orange/5 border border-orange/20 px-4 py-3 space-y-1.5">
-        <p className="text-xs font-bold text-text-primary">{t("compressionOverviewTitle")}</p>
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          {t("compressionOverviewDesc")}
-        </p>
-        <ul className="text-[11px] text-text-secondary space-y-0.5 pl-3 list-none">
-          <li><span className="font-mono font-bold text-blue">S1</span> — {t("compressionOverviewS1")}</li>
-          <li><span className="font-mono font-bold text-purple">Ch</span> — {t("compressionOverviewCh")}</li>
-          <li><span className="font-mono font-bold text-orange">T1</span> — {t("compressionOverviewT1")}</li>
-          <li><span className="font-mono font-bold text-blue">S0</span> — {t("compressionOverviewS0")}</li>
-          <li><span className="font-mono font-bold text-green">Maj</span> — {t("compressionOverviewMaj")}</li>
-          <li><span className="font-mono font-bold text-orange">T2</span> — {t("compressionOverviewT2")}</li>
-        </ul>
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          {t("compressionOverviewEnd")}
-        </p>
-      </div>
-
-      {/* Round stepper */}
-      <div className="rounded-2xl bg-code-bg border border-code-border p-4">
-        <div className="flex items-center justify-between mb-3">
-          <button
-            onClick={() => setRound((r) => Math.max(0, r - 1))}
-            disabled={round === 0}
-            className="rounded-xl border border-border bg-white px-3 py-1.5 text-sm font-semibold text-text-primary disabled:opacity-30 hover:shadow-card transition-all"
+      {/* H[0]–H[7] breakdown */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        {finalState.map((val, i) => (
+          <div
+            key={i}
+            style={{
+              padding: "8px 12px",
+              background: "var(--bg-card)",
+              border: "1px solid var(--rule)",
+              borderRadius: "var(--r-sm)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              textAlign: "center",
+            }}
           >
-            ← {t("prevRound")}
-          </button>
-          <div className="text-center">
-            <div className="text-2xl font-black text-orange font-mono">{round}</div>
-            <div className="text-[10px] text-text-secondary uppercase tracking-widest">
-              {t("roundLabel")} / 63
+            <div style={{ opacity: 0.5, marginBottom: 2, fontSize: 10 }}>
+              H[{i}]
             </div>
+            <div style={{ color: "var(--ink)" }}>{hex8(val)}</div>
           </div>
-          <button
-            onClick={() => setRound((r) => Math.min(63, r + 1))}
-            disabled={round === 63}
-            className="rounded-xl border border-border bg-white px-3 py-1.5 text-sm font-semibold text-text-primary disabled:opacity-30 hover:shadow-card transition-all"
-          >
-            {t("nextRound")} →
-          </button>
-        </div>
-        <input
-          type="range"
-          min={0}
-          max={63}
-          value={round}
-          onChange={(e) => setRound(Number(e.target.value))}
-          className="w-full accent-orange"
-        />
-        <div className="flex justify-between text-[10px] text-text-secondary font-mono mt-1">
-          <span>W[{round}] = {hex8(r.w)}</span>
-          <span>K[{round}] = {hex8(r.k)}</span>
-        </div>
-        {/* W and K source explanations */}
-        <div className="mt-3 space-y-1.5">
-          <div className="rounded-lg bg-orange/8 border border-orange/20 px-3 py-2 text-[10px] text-text-secondary leading-relaxed">
-            <span className="font-mono font-bold text-orange">W[{round}]</span>
-            {" — "}
-            {t("roundWNote", { round })}
-          </div>
-          <div className="rounded-lg bg-blue/8 border border-blue/20 px-3 py-2 text-[10px] text-text-secondary leading-relaxed">
-            <span className="font-mono font-bold text-blue">K[{round}]</span>
-            {" — "}
-            {(() => {
-              const prime = K_PRIMES[round];
-              const root = Math.pow(prime, 1/3);
-              return t.rich("roundKNote", {
-                round,
-                ordinal: ordinal(round + 1),
-                prime,
-                fullValue: root.toFixed(10) + "...",
-                fractional: (root % 1).toFixed(10).split(".")[1] + "...",
-                base10: new Intl.NumberFormat().format(r.k),
-                hex: hex8(r.k),
-                c: (chunks) => <span className="font-mono font-bold text-text-primary">{chunks}</span>
-              });
-            })()}
-          </div>
-        </div>
+        ))}
       </div>
-
-
-      {/* Working variables */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("workingVarsLabel")}
-        </p>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-          {vars.map(([name, val]) => (
-            <div
-              key={name}
-              className={cn(
-                "h-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border px-1",
-                VAR_COLORS[name]
-              )}
-            >
-              <span className="text-[10px] font-bold uppercase">{name}</span>
-              <span className="font-mono text-[10px] sm:text-[11px] font-bold leading-tight break-all text-center">
-                {hex8(val)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* State flow: A–H ↔ a–h */}
-      <StateFlowDemo blockTrace={blockTrace} round={round} t={t} />
-
-      {/* Operations */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("opsLabel")}
-        </p>
-        <div className="space-y-1.5">
-          {ops.map(({ label, formula, value, color }) => (
-            <div
-              key={label}
-              className="flex items-center gap-3 rounded-xl bg-white border border-border px-3 py-2.5"
-            >
-              <span className={cn("font-mono text-xs font-bold w-8 shrink-0", color)}>
-                {label}
-              </span>
-              <span className="font-mono text-[11px] text-text-secondary flex-1 min-w-0 break-words leading-tight">
-                {formula}
-              </span>
-              <span className="font-mono text-sm font-bold text-text-primary shrink-0">
-                {hex8(value)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* New state */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("newStateLabel")}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div className="flex items-center justify-between rounded-xl bg-orange/10 border border-orange/30 px-4 py-2.5">
-            <span className="font-mono text-sm font-semibold text-text-primary">a = T1 + T2</span>
-            <span className="font-mono font-bold text-orange">{hex8(r.a_new)}</span>
-          </div>
-          <div className="flex items-center justify-between rounded-xl bg-orange/10 border border-orange/30 px-4 py-2.5">
-            <span className="font-mono text-sm font-semibold text-text-primary">e = d + T1</span>
-            <span className="font-mono font-bold text-orange">{hex8(r.e_new)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Operations explainer */}
-      <CompressionExplainer t={t} />
-    </div>
-  );
-}
-
-// ── Hash tab ──────────────────────────────────────────────────────────────────
-
-function HashTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTranslations> }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    navigator.clipboard.writeText(trace.hash);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const wordColors = [
-    "bg-orange/10 text-orange border-orange/30",
-    "bg-purple/10 text-purple border-purple/30",
-    "bg-blue/10   text-blue   border-blue/30",
-    "bg-green/10  text-green  border-green/30",
-  ];
-
-  // Final state is the last block's finalState
-  const finalState = trace.blocks[trace.blocks.length - 1].finalState;
-
-  return (
-    <div className="space-y-5">
-      <p className="text-sm text-text-secondary leading-relaxed">{t("hashDesc")}</p>
-
-      {/* 8 final words */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("hashWordsLabel")}
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {finalState.map((w, i) => (
-            <div
-              key={i}
-              className={cn(
-                "rounded-xl border px-3 py-2.5 flex flex-col gap-0.5",
-                wordColors[i % 4]
-              )}
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-                H[{i}]
-              </span>
-              <span className="font-mono text-sm font-bold">{hex8(w)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Concatenated hash */}
-      <div>
-        <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-2">
-          {t("hashLabel")}
-        </p>
-        <div className="rounded-3xl overflow-hidden border border-border shadow-card">
-          <div className="bg-code-bg px-5 py-4">
-            <p className="font-mono text-sm text-blue break-all leading-relaxed tracking-wide">
-              {trace.hash}
-            </p>
-          </div>
-          <div className="bg-white px-5 py-3 flex items-center justify-between">
-            <span className="text-xs text-text-secondary">
-              {t("hashConcat")}
-            </span>
-            <button
-              onClick={copy}
-              className="text-xs font-semibold text-orange hover:text-orange/70 transition-colors"
-            >
-              {copied ? t("copiedBtn") : t("copyBtn")}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -1391,77 +899,313 @@ function HashTab({ trace, t }: { trace: Sha256Trace; t: ReturnType<typeof useTra
 
 export function Sha256Visualizer() {
   const t = useTranslations("sha256Visualizer");
+  const locale = useLocale();
+  const isEn = locale === "en";
 
   const [input, setInput] = useState("abc");
-  const [tab, setTab] = useState<Tab>("padding");
-  const [selectedBlock, setSelectedBlock] = useState(0);
+  const [stage, setStage] = useState(0);
+  const [round, setRound] = useState(0);
 
-  // Synchronous trace — sha256trace handles any length
-  const trace: Sha256Trace = sha256trace(input);
+  const trace = useMemo(() => sha256trace(input), [input]);
+  const blockTrace = trace.blocks[0];
 
-  // Clamp selected block index when numBlocks changes
-  const blockIndex = Math.min(selectedBlock, trace.numBlocks - 1);
-  const blockTrace = trace.blocks[blockIndex];
+  const msgBytes = useMemo(
+    () => Array.from(new TextEncoder().encode(input)),
+    [input]
+  );
 
-  const tabLabels: Record<Tab, string> = {
-    padding:     t("tabPadding"),
-    schedule:    t("tabSchedule"),
-    compression: t("tabCompression"),
-    hash:        t("tabHash"),
-  };
+  const paddedBytes = useMemo(
+    () => Array.from(trace.allPaddedBytes.slice(0, 64)),
+    [trace]
+  );
 
-  const msgLen = new TextEncoder().encode(input).length;
+  const stages = [
+    { label: isEn ? "Message" : "ข้อความ", code: "M" },
+    { label: isEn ? "Padding" : "Padding", code: "P" },
+    { label: isEn ? "Schedule" : "Schedule", code: "W" },
+    { label: isEn ? "64 Rounds" : "64 รอบ", code: "R" },
+    { label: isEn ? "Digest" : "ผลลัพธ์", code: "H" },
+  ];
+
+  const finalState = trace.blocks[trace.blocks.length - 1].finalState;
 
   return (
-    <div className="space-y-5">
-      {/* Input */}
-      <div className="rounded-3xl overflow-hidden shadow-card border border-border">
-        <div className="px-5 py-3 flex items-center justify-between bg-bg-soft">
-          <span className="text-xs font-semibold text-text-secondary">{t("inputLabel")}</span>
-          <span className="text-xs text-text-secondary font-mono">
-            {t("inputCounter", { bytes: msgLen, blocks: trace.numBlocks })}
-          </span>
+    <div style={{ paddingBottom: 80 }}>
+      {/* ── Tool header ─────────────────────────────────────────── */}
+      <header
+        style={{
+          padding: "40px 0 32px",
+          borderBottom: "1px solid var(--rule)",
+        }}
+      >
+        <div className="page">
+          <Link
+            href="/"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: "var(--ink-mute)",
+              display: "block",
+              marginBottom: 24,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+            }}
+          >
+            ← {isEn ? "Back to tools" : "กลับ"}
+          </Link>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 24,
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                <span className="pill orange dot">
+                  {isEn ? "Tool" : "เครื่องมือ"}
+                </span>
+                <span className="pill teal">Live</span>
+              </div>
+              <h1
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 400,
+                  fontSize: "clamp(36px, 5vw, 56px)",
+                  letterSpacing: "-0.025em",
+                  lineHeight: 1,
+                }}
+              >
+                SHA-256{" "}
+                <em style={{ color: "var(--orange-deep)" }}>Visualizer</em>
+              </h1>
+              <p
+                style={{
+                  marginTop: 14,
+                  fontSize: 17,
+                  color: "var(--ink-soft)",
+                  maxWidth: 560,
+                  lineHeight: 1.55,
+                }}
+              >
+                {isEn
+                  ? t("subtitle")
+                  : "พิมพ์ข้อความใดก็ได้และติดตามทุกขั้นตอน — padding, schedule expansion, และ 64 รอบของการบีบอัด"}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+              <button
+                className="btn btn-ghost"
+                onClick={() => { setInput(""); setRound(0); }}
+                style={{ fontSize: 13 }}
+              >
+                {isEn ? "Reset" : "ล้าง"}
+              </button>
+              <button
+                className="btn"
+                onClick={() => navigator.clipboard?.writeText(trace.hash)}
+                style={{ fontSize: 13 }}
+              >
+                {isEn ? "Copy hash" : "คัดลอกแฮช"}
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="bg-white px-5 py-4 space-y-2">
-          <input
-            type="text"
+      </header>
+
+      {/* ── Sticky stage stepper ────────────────────────────────── */}
+      <div
+        style={{
+          position: "sticky",
+          top: 56,
+          zIndex: 30,
+          background: "var(--bg)",
+          borderBottom: "1px solid var(--rule)",
+        }}
+      >
+        <div className="page" style={{ padding: "14px 32px" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 4,
+              alignItems: "center",
+              overflowX: "auto",
+            }}
+          >
+            {stages.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <button
+                  onClick={() => setStage(i)}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    background:
+                      stage === i
+                        ? "var(--ink)"
+                        : stage > i
+                        ? "var(--orange-tint)"
+                        : "transparent",
+                    color:
+                      stage === i
+                        ? "var(--bg)"
+                        : stage > i
+                        ? "var(--orange-deep)"
+                        : "var(--ink-mute)",
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      opacity: 0.65,
+                    }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {s.label}
+                </button>
+                {i < stages.length - 1 && (
+                  <div
+                    style={{
+                      width: 16,
+                      height: 1,
+                      background: "var(--rule)",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content ─────────────────────────────────────────────── */}
+      <div className="page" style={{ marginTop: 48 }}>
+        {/* Always-visible input */}
+        <section style={{ marginBottom: 48 }}>
+          <div className="eyebrow" style={{ marginBottom: 10 }}>
+            {isEn ? "Your message" : "ข้อความของคุณ"}
+          </div>
+          <textarea
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              setSelectedBlock(0);
+              setRound(0);
             }}
-            placeholder={t("inputPlaceholder")}
+            rows={2}
             spellCheck={false}
-            className="w-full bg-bg-soft font-sans text-sm text-text-primary
-                       border border-border rounded-2xl px-3.5 py-2.5
-                       focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange
-                       placeholder:text-text-secondary/50 transition-colors"
+            style={{
+              width: "100%",
+              padding: 20,
+              fontFamily: "var(--font-mono)",
+              fontSize: 18,
+              background: "var(--bg-card)",
+              border: "1px solid var(--rule)",
+              borderRadius: "var(--r-lg)",
+              outline: "none",
+              color: "var(--ink)",
+              resize: "vertical",
+              transition: "border-color 0.15s",
+              lineHeight: 1.5,
+            }}
+            onFocus={(e) =>
+              (e.currentTarget.style.borderColor = "var(--orange)")
+            }
+            onBlur={(e) =>
+              (e.currentTarget.style.borderColor = "var(--rule)")
+            }
           />
-          <p className="text-xs text-text-secondary">{t("inputNote")}</p>
+          <div
+            style={{
+              marginTop: 8,
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: "var(--ink-mute)",
+            }}
+          >
+            {msgBytes.length} {isEn ? "bytes" : "ไบต์"} ·{" "}
+            {msgBytes.length * 8} {isEn ? "bits" : "บิต"} ·{" "}
+            {trace.numBlocks} × 512-bit {isEn ? "block(s)" : "บล็อก"}
+          </div>
+        </section>
+
+        {/* Stage content */}
+        <div key={stage} className="rise">
+          {stage === 0 && (
+            <StageMessage bytes={msgBytes} isEn={isEn} />
+          )}
+          {stage === 1 && (
+            <StagePadding
+              paddedBytes={paddedBytes}
+              originalLen={msgBytes.length}
+              isEn={isEn}
+            />
+          )}
+          {stage === 2 && (
+            <StageSchedule schedule={blockTrace.schedule} isEn={isEn} />
+          )}
+          {stage === 3 && (
+            <StageRounds
+              blockTrace={blockTrace}
+              round={round}
+              setRound={setRound}
+              isEn={isEn}
+            />
+          )}
+          {stage === 4 && (
+            <StageDigest
+              hash={trace.hash}
+              input={input}
+              finalState={finalState}
+              isEn={isEn}
+            />
+          )}
         </div>
-        {/* Hash bar — always visible */}
-        <HashBar hash={trace.hash} label={t("hashBarLabel")} />
-      </div>
 
-      {/* Block picker — only shown for multi-block */}
-      {trace.numBlocks > 1 && (
-        <BlockPicker
-          numBlocks={trace.numBlocks}
-          selected={blockIndex}
-          onChange={setSelectedBlock}
-          label={t("blockPickerLabel")}
-        />
-      )}
-
-      {/* Tabs */}
-      <TabBar active={tab} onChange={setTab} labels={tabLabels} />
-
-      {/* Tab content */}
-      <div className="rounded-3xl border border-border bg-white p-5 shadow-card min-h-64">
-        {tab === "padding"     && <PaddingTab     trace={trace} blockTrace={blockTrace} t={t} />}
-        {tab === "schedule"    && <ScheduleTab    blockTrace={blockTrace} t={t} />}
-        {tab === "compression" && <CompressionTab blockTrace={blockTrace} t={t} />}
-        {tab === "hash"        && <HashTab        trace={trace} t={t} />}
+        {/* ── Stage navigation ─────────────────────────────────── */}
+        <div
+          style={{
+            marginTop: 60,
+            paddingTop: 24,
+            borderTop: "1px solid var(--rule)",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <button
+            onClick={() => setStage((s) => Math.max(0, s - 1))}
+            disabled={stage === 0}
+            className="btn btn-ghost"
+            style={{ opacity: stage === 0 ? 0.35 : 1, fontSize: 14 }}
+          >
+            ← {isEn ? "Previous step" : "ขั้นก่อนหน้า"}
+          </button>
+          <button
+            onClick={() => setStage((s) => Math.min(stages.length - 1, s + 1))}
+            disabled={stage === stages.length - 1}
+            className="btn btn-orange"
+            style={{ opacity: stage === stages.length - 1 ? 0.35 : 1, fontSize: 14 }}
+          >
+            {isEn ? "Next step" : "ขั้นถัดไป"} →
+          </button>
+        </div>
       </div>
     </div>
   );
