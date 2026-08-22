@@ -11,121 +11,76 @@ import { ReverseChallenge } from "@/components/crypto/ReverseChallenge";
 import { OperationsDemo } from "@/components/crypto/OperationsDemo";
 import { RoundSteps } from "@/components/crypto/RoundSteps";
 
+
 export default function SHA256IrreversibilityPage() {
   const t = useTranslations("lesson");
+  const d = useTranslations("difficulty");
 
   return (
     <LessonLayout>
       <LessonHeader
         title={t("title")}
         subtitle={t("subtitle")}
-        topic={t("topic")}
+        difficultyVariant="intermediate"
+        difficultyLabel={d("intermediate")}
         readingTime={t("readingTime")}
-        lessonNum="Lesson 1 / 3"
+        topic={t("topic")}
       />
 
-      {/* §1 — What is a hash function? */}
-      <ConceptSection eyebrow="§1" title={t("s1Title")}>
-        {/* Hook */}
-        <div
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--rule)",
-            borderRadius: "var(--r-lg)",
-            padding: 24,
-          }}
-        >
-          <div className="eyebrow" style={{ marginBottom: 12 }}>
-            {t("hookLabel")}
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 13,
-              lineHeight: 1.6,
-              wordBreak: "break-all",
-              color: "var(--orange-deep)",
-              padding: "12px 16px",
-              background: "var(--bg)",
-              borderRadius: "var(--r-sm)",
-            }}
-          >
+      {/* Hook */}
+      <div className="mb-12 rounded-3xl overflow-hidden shadow-card border border-border">
+        <div className="px-5 py-3 text-xs font-semibold text-text-secondary bg-bg-soft">
+          {t("hookLabel")}
+        </div>
+        <div className="bg-code-bg px-5 py-4">
+          <p className="font-mono text-sm text-blue break-all leading-relaxed tracking-wide">
             b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576f2a97c2d552ea9a8
-          </div>
-          <p style={{ marginTop: 16, fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6 }}>
+          </p>
+        </div>
+        <div className="bg-white px-5 py-4">
+          <p className="text-sm text-text-secondary leading-relaxed">
             {t("hookBody")}
           </p>
         </div>
+      </div>
 
-        <p>{t("s1p1")}</p>
-        <p>{t("s1p2")}</p>
-
-        {/* Property tiles */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 20,
-          }}
-        >
+      {/* Section 1 */}
+      <ConceptSection title={t("s1Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s1p1")}</p>
+        <p className="text-text-secondary leading-relaxed">{t("s1p2")}</p>
+        <div className="space-y-3">
           {(
             [
-              { num: "01", labelKey: "s1prop1Label", bodyKey: "s1prop1Body" },
-              { num: "02", labelKey: "s1prop2Label", bodyKey: "s1prop2Body" },
-              { num: "03", labelKey: "s1prop3Label", bodyKey: "s1prop3Body" },
+              { key: "s1prop1", color: "text-orange" },
+              { key: "s1prop2", color: "text-purple" },
+              { key: "s1prop3", color: "text-blue" },
             ] as const
-          ).map(({ num, labelKey, bodyKey }) => (
+          ).map(({ key, color }, i) => (
             <div
-              key={num}
-              style={{
-                padding: 24,
-                border: "1px solid var(--rule)",
-                borderRadius: "var(--r-md)",
-                background: "var(--bg-card)",
-              }}
+              key={i}
+              className="flex gap-4 rounded-2xl bg-bg-soft border border-border p-4"
             >
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  color: "var(--orange-deep)",
-                  letterSpacing: "0.05em",
-                }}
+              <span
+                className={`font-mono text-xs font-bold shrink-0 mt-0.5 ${color}`}
               >
-                {num}
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 22,
-                  marginTop: 8,
-                  letterSpacing: "-0.01em",
-                  color: "var(--ink)",
-                }}
-              >
-                {t(labelKey)}
-              </div>
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: 14,
-                  color: "var(--ink-soft)",
-                  lineHeight: 1.55,
-                }}
-              >
-                {t(bodyKey)}
-              </div>
+                0{i + 1}
+              </span>
+              <span className="text-sm text-text-secondary">
+                <strong className="text-text-primary">
+                  {t(`${key}Label` as Parameters<typeof t>[0])}
+                </strong>{" "}
+                — {t(`${key}Body` as Parameters<typeof t>[0])}
+              </span>
             </div>
           ))}
         </div>
-
-        <p>{t("s1tryIt")}</p>
+        <p className="text-text-secondary leading-relaxed">{t("s1tryIt")}</p>
         <HashSandbox />
       </ConceptSection>
 
-      {/* §2 — Why it's irreversible */}
-      <ConceptSection eyebrow="§2" title={t("s2Title")}>
-        <p>{t("s2intro")}</p>
+      {/* Section 2 */}
+      <ConceptSection title={t("s2Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s2intro")}</p>
         <StepExplainer
           steps={[
             {
@@ -155,19 +110,10 @@ export default function SHA256IrreversibilityPage() {
               title: t("step3Title"),
               children: (
                 <>
-                  <p>
+                  <p className="text-text-secondary leading-relaxed">
                     {t.rich("step3p1", {
                       c: (chunks) => (
-                        <code
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: 13,
-                            padding: "2px 6px",
-                            borderRadius: 4,
-                            background: "var(--orange-tint)",
-                            color: "var(--orange-deep)",
-                          }}
-                        >
+                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-[#eff6ff] text-[#1d4ed8] border border-[#dbeafe]">
                           {chunks}
                         </code>
                       ),
@@ -175,19 +121,10 @@ export default function SHA256IrreversibilityPage() {
                   </p>
                   <RoundSteps />
                   <OperationsDemo />
-                  <p>
+                  <p className="text-text-secondary leading-relaxed">
                     {t.rich("step3p2", {
                       c: (chunks) => (
-                        <code
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: 13,
-                            padding: "2px 6px",
-                            borderRadius: 4,
-                            background: "var(--orange-tint)",
-                            color: "var(--orange-deep)",
-                          }}
-                        >
+                        <code className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-[#faf5ff] text-[#7e22ce] border border-[#f3e8ff]">
                           {chunks}
                         </code>
                       ),
@@ -200,159 +137,67 @@ export default function SHA256IrreversibilityPage() {
         />
       </ConceptSection>
 
-      {/* §3 — Try it yourself */}
-      <ConceptSection eyebrow="§3" title={t("s3Title")}>
-        <p>{t("s3body")}</p>
+      {/* Section 3 */}
+      <ConceptSection title={t("s3Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s3body")}</p>
         <HashSandbox />
       </ConceptSection>
 
-      {/* §4 — Try to reverse it */}
-      <ConceptSection eyebrow="§4" title={t("s4Title")}>
-        <p>{t("s4Body")}</p>
+      {/* Section 5 */}
+      <ConceptSection title={t("s4Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s4Body")}</p>
         <ReverseChallenge />
         <Callout variant="warning">{t("s4callout")}</Callout>
       </ConceptSection>
 
-      {/* §5 — Why it matters for Bitcoin */}
-      <ConceptSection eyebrow="§5" title={t("s5Title")}>
-        <p>{t("s5intro")}</p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 20,
-          }}
-        >
-          <div
-            style={{
-              padding: 24,
-              border: "1px solid var(--rule)",
-              borderRadius: "var(--r-md)",
-              background: "var(--bg-card)",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--orange-deep)",
-                letterSpacing: "0.05em",
-              }}
-            >
-              01
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 22,
-                marginTop: 8,
-                letterSpacing: "-0.01em",
-                color: "var(--ink)",
-              }}
-            >
+      {/* Section 6 */}
+      <ConceptSection title={t("s5Title")}>
+        <p className="text-text-secondary leading-relaxed">{t("s5intro")}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-3xl border border-border bg-orange-light p-5">
+            <div className="text-2xl mb-3">⛏️</div>
+            <h3 className="text-sm font-bold text-text-primary mb-2">
               {t("s5miningTitle")}
-            </div>
-            <div
-              style={{ marginTop: 8, fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.55 }}
-            >
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
               {t("s5miningBody")}
-            </div>
+            </p>
           </div>
-          <div
-            style={{
-              padding: 24,
-              border: "1px solid var(--rule)",
-              borderRadius: "var(--r-md)",
-              background: "var(--bg-card)",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--orange-deep)",
-                letterSpacing: "0.05em",
-              }}
-            >
-              02
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 22,
-                marginTop: 8,
-                letterSpacing: "-0.01em",
-                color: "var(--ink)",
-              }}
-            >
+          <div className="rounded-3xl border border-border bg-purple-light p-5">
+            <div className="text-2xl mb-3">🔑</div>
+            <h3 className="text-sm font-bold text-text-primary mb-2">
               {t("s5addressTitle")}
-            </div>
-            <div
-              style={{ marginTop: 8, fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.55 }}
-            >
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
               {t("s5addressBody")}
-            </div>
+            </p>
           </div>
         </div>
         <Callout variant="insight">{t("s5callout")}</Callout>
       </ConceptSection>
 
-      {/* Editorial next-lesson nav */}
-      <div
-        className="page-narrow"
-        style={{ marginTop: 80, paddingTop: 40, borderTop: "1px solid var(--rule)" }}
-      >
-        <div className="eyebrow" style={{ marginBottom: 0 }}>
+      {/* Related lesson */}
+      <div className="mt-16 pt-8 border-t border-border">
+        <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary mb-3">
           {t("relatedLabel")}
-        </div>
+        </p>
         <Link
           href="/lessons/how-sha256-works"
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            padding: "24px 0",
-            textDecoration: "none",
-            borderBottom: "1px solid var(--rule-soft)",
-          }}
+          className="group flex items-center justify-between rounded-2xl bg-bg-soft border border-border p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
         >
-          <h3
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 32,
-              letterSpacing: "-0.015em",
-              fontWeight: 400,
-              color: "var(--ink)",
-              margin: 0,
-            }}
-          >
+          <span className="font-semibold text-text-primary group-hover:text-orange transition-colors">
             {t("relatedNext")}
-          </h3>
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontStyle: "italic",
-              fontSize: 32,
-              color: "var(--orange-deep)",
-              flexShrink: 0,
-              paddingLeft: 24,
-            }}
-          >
-            →
           </span>
+          <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
         </Link>
         <Link
           href="/lessons/public-private-keys"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "20px 0",
-            textDecoration: "none",
-          }}
+          className="group flex items-center justify-between rounded-2xl bg-bg-soft border border-border p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
         >
-          <span style={{ fontSize: 16, color: "var(--ink-soft)" }}>{t("relatedKeys")}</span>
-          <span style={{ color: "var(--ink-mute)", fontSize: 18 }}>→</span>
+          <span className="font-semibold text-text-primary group-hover:text-orange transition-colors">
+            {t("relatedKeys")}
+          </span>
+          <span className="text-text-secondary group-hover:text-orange transition-colors">→</span>
         </Link>
       </div>
     </LessonLayout>

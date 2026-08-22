@@ -36,10 +36,8 @@ const config: Config = {
         "code-text": "var(--color-code-text)",
       },
       fontFamily: {
-        sans: ["var(--font-ibm-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
-        mono: ["var(--font-ibm-plex-mono)", "IBM Plex Mono", "Menlo", "monospace"],
-        display: ["var(--font-newsreader)", "Newsreader", "Georgia", "serif"],
-        ui: ["var(--font-ibm-plex-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "Menlo", "monospace"],
       },
       maxWidth: {
         lesson: "72ch",
