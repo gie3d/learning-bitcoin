@@ -6,9 +6,11 @@ export interface KeyPair {
   address: string;
 }
 
-const N = BigInt(
+/** Order of the secp256k1 group — the number of valid private keys, plus one. */
+export const CURVE_ORDER = BigInt(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
 );
+const N = CURVE_ORDER;
 const ZERO = BigInt(0);
 
 export function generatePrivateKey(): string {

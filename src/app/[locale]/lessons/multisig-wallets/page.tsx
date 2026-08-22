@@ -10,6 +10,7 @@ import { Callout } from "@/components/ui/Callout";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { MultisigVault } from "@/components/crypto/MultisigVault";
 import { MultisigConfigExplorer } from "@/components/crypto/MultisigConfigExplorer";
+import { ReceiveAddresses } from "@/components/crypto/ReceiveAddresses";
 
 export default function MultisigWalletsPage() {
   const t = useTranslations("multisig");
@@ -129,6 +130,59 @@ export default function MultisigWalletsPage() {
         />
       </ConceptSection>
 
+      {/* Funding the vault */}
+      <ConceptSection title={t("fundTitle")}>
+        <p className="text-text-secondary leading-relaxed">{t("fundIntro")}</p>
+        <StepExplainer
+          steps={[
+            {
+              number: 1,
+              title: t("fundStep1Title"),
+              children: (
+                <div className="space-y-3">
+                  <p className="text-text-secondary leading-relaxed">{t("fundStep1p1")}</p>
+                  <p className="text-text-secondary leading-relaxed">{t("fundStep1p2")}</p>
+                  <Callout variant="warning">{t("fundStep1callout")}</Callout>
+                </div>
+              ),
+            },
+            {
+              number: 2,
+              title: t("fundStep2Title"),
+              children: (
+                <div className="space-y-3">
+                  <p className="text-text-secondary leading-relaxed">{t("fundStep2p1")}</p>
+                  <CodeBlock language="sender's wallet">{t("fundStep2code")}</CodeBlock>
+                  <p className="text-text-secondary leading-relaxed">{t("fundStep2p2")}</p>
+                </div>
+              ),
+            },
+            {
+              number: 3,
+              title: t("fundStep3Title"),
+              children: (
+                <div className="space-y-3">
+                  <p className="text-text-secondary leading-relaxed">{t("fundStep3p1")}</p>
+                  <CodeBlock language="utxo">{t("fundStep3code")}</CodeBlock>
+                  <p className="text-text-secondary leading-relaxed">{t("fundStep3p2")}</p>
+                </div>
+              ),
+            },
+          ]}
+        />
+        <Callout variant="info">{t("fundCallout")}</Callout>
+      </ConceptSection>
+
+      {/* Generating receive addresses */}
+      <ConceptSection title={t("recvTitle")}>
+        <p className="text-text-secondary leading-relaxed">{t("recvP1")}</p>
+        <CodeBlock language="wallet descriptor">{t("recvCode")}</CodeBlock>
+        <p className="text-text-secondary leading-relaxed">{t("recvP2")}</p>
+        <ReceiveAddresses />
+        <p className="text-text-secondary leading-relaxed">{t("recvP3")}</p>
+        <Callout variant="warning">{t("recvCallout")}</Callout>
+      </ConceptSection>
+
       {/* Section 3 — interactive vault */}
       <ConceptSection title={t("s3Title")}>
         <p className="text-text-secondary leading-relaxed">{t("s3body")}</p>
@@ -141,6 +195,56 @@ export default function MultisigWalletsPage() {
         <p className="text-text-secondary leading-relaxed">{t("s4body")}</p>
         <MultisigConfigExplorer />
         <Callout variant="warning">{t("s4callout")}</Callout>
+      </ConceptSection>
+
+      {/* The technology behind it */}
+      <ConceptSection title={t("techTitle")}>
+        <p className="text-text-secondary leading-relaxed">{t("techIntro")}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            { title: t("techCurveTitle"), body: t("techCurveBody") },
+            { title: t("techScriptTitle"), body: t("techScriptBody") },
+            { title: t("techOutputTitle"), body: t("techOutputBody") },
+            { title: t("techHdTitle"), body: t("techHdBody") },
+            { title: t("techPsbtTitle"), body: t("techPsbtBody") },
+            { title: t("techSchnorrTitle"), body: t("techSchnorrBody") },
+          ].map(({ title, body }) => (
+            <div key={title} className="rounded-2xl border border-border bg-bg-soft p-4">
+              <p className="text-sm font-semibold text-text-primary mb-1">{title}</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{body}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-text-secondary leading-relaxed">{t("techBipsIntro")}</p>
+        <CodeBlock language="standards">{t("techBips")}</CodeBlock>
+        <Callout variant="info">{t("techCallout")}</Callout>
+      </ConceptSection>
+
+      {/* Risks */}
+      <ConceptSection title={t("riskTitle")}>
+        <p className="text-text-secondary leading-relaxed">{t("riskIntro")}</p>
+        <div className="space-y-3">
+          {[
+            { title: t("risk1Title"), body: t("risk1Body") },
+            { title: t("risk2Title"), body: t("risk2Body") },
+            { title: t("risk3Title"), body: t("risk3Body") },
+            { title: t("risk4Title"), body: t("risk4Body") },
+            { title: t("risk5Title"), body: t("risk5Body") },
+            { title: t("risk6Title"), body: t("risk6Body") },
+          ].map(({ title, body }) => (
+            <div
+              key={title}
+              className="flex gap-3 rounded-2xl border border-red/20 bg-red-light p-4"
+            >
+              <span className="shrink-0 text-base leading-tight">⚠️</span>
+              <div>
+                <p className="text-sm font-semibold text-text-primary mb-0.5">{title}</p>
+                <p className="text-sm text-text-secondary leading-relaxed">{body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Callout variant="warning">{t("riskCallout")}</Callout>
       </ConceptSection>
 
       {/* Section 5 — why it matters */}
