@@ -97,12 +97,12 @@ function ripemd160(data: Uint8Array): Uint8Array {
   return out;
 }
 
-async function sha256Bytes(data: Uint8Array): Promise<Uint8Array> {
+export async function sha256Bytes(data: Uint8Array): Promise<Uint8Array> {
   const buf = await crypto.subtle.digest("SHA-256", data.buffer as ArrayBuffer);
   return new Uint8Array(buf);
 }
 
-function hexToBytes(hex: string): Uint8Array {
+export function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
@@ -131,24 +131,33 @@ function base58Encode(bytes: Uint8Array): string {
   return result;
 }
 
-export async function publicKeyToAddress(compressedPubKeyHex: string): Promise<string> {
-  const pubBytes = hexToBytes(compressedPubKeyHex);
-  const sha256d = await sha256Bytes(pubBytes);
-  const ripemd = ripemd160(sha256d);
+export function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
-  const versioned = new Uint8Array(21);
-  versioned[0] = 0x00;
-  versioned.set(ripemd, 1);
+/** RIPEMD160(SHA256(data)) — the standard Bitcoin "hash160". */
+export async function hash160(data: Uint8Array): Promise<Uint8Array> {
+  return ripemd160(await sha256Bytes(data));
+}
+
+/** Base58Check-encode a payload behind a version byte (0x00 P2PKH, 0x05 P2SH). */
+export async function base58Check(version: number, payload: Uint8Array): Promise<string> {
+  const versioned = new Uint8Array(1 + payload.length);
+  versioned[0] = version;
+  versioned.set(payload, 1);
 
   const check1 = await sha256Bytes(versioned);
   const check2 = await sha256Bytes(check1);
-  const checksum = check2.slice(0, 4);
 
-  const full = new Uint8Array(25);
+  const full = new Uint8Array(versioned.length + 4);
   full.set(versioned);
-  full.set(checksum, 21);
+  full.set(check2.slice(0, 4), versioned.length);
 
   return base58Encode(full);
+}
+
+export async function publicKeyToAddress(compressedPubKeyHex: string): Promise<string> {
+  return base58Check(0x00, await hash160(hexToBytes(compressedPubKeyHex)));
 }
 
 export async function generateKeyPair(): Promise<KeyPair> {
